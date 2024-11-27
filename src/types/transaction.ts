@@ -2,7 +2,7 @@ export type Transaction = {
   id: number;
   description: string;
   dueDate: string;
-  paymentDate: string;
+  paymentDate?: string;
   supplier: string;
   status: string;
   category: string;
