@@ -32,6 +32,10 @@ const FormasDePagamento = () => {
 
   const form = useForm<PaymentMethodFormValues>({
     resolver: zodResolver(paymentMethodSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
   });
 
   const { data: paymentMethods, isLoading } = useQuery({
@@ -50,7 +54,10 @@ const FormasDePagamento = () => {
     mutationFn: async (values: PaymentMethodFormValues) => {
       const { error } = await supabase
         .from('payment_methods')
-        .insert([values]);
+        .insert([{ 
+          name: values.name,
+          description: values.description 
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -65,7 +72,10 @@ const FormasDePagamento = () => {
     mutationFn: async (values: PaymentMethodFormValues) => {
       const { error } = await supabase
         .from('payment_methods')
-        .update(values)
+        .update({ 
+          name: values.name,
+          description: values.description 
+        })
         .eq('id', selectedMethod.id);
       if (error) throw error;
     },

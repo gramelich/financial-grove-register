@@ -32,6 +32,10 @@ const PlanoDeContas = () => {
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
   });
 
   const { data: categories, isLoading } = useQuery({
@@ -50,7 +54,10 @@ const PlanoDeContas = () => {
     mutationFn: async (values: CategoryFormValues) => {
       const { error } = await supabase
         .from('categories')
-        .insert([values]);
+        .insert([{ 
+          name: values.name,
+          description: values.description 
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -65,7 +72,10 @@ const PlanoDeContas = () => {
     mutationFn: async (values: CategoryFormValues) => {
       const { error } = await supabase
         .from('categories')
-        .update(values)
+        .update({ 
+          name: values.name,
+          description: values.description 
+        })
         .eq('id', selectedCategory.id);
       if (error) throw error;
     },
