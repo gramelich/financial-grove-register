@@ -8,11 +8,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil } from "lucide-react";
+import { Plus } from "lucide-react";
 import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { Transaction } from "@/types/transaction";
-import { useQuery } from "@tanstack/react-query";
 
 const Lancamentos = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -24,12 +23,12 @@ const Lancamentos = () => {
       // Atualizar transação existente
       const updatedTransactions = transactions.map((t) =>
         t.id === selectedTransaction.id
-          ? { ...data, id: selectedTransaction.id }
+          ? { ...selectedTransaction, ...data }
           : t
       );
       setTransactions(updatedTransactions);
     } else {
-      // Criar nova transação
+      // Criar nova transação com todos os campos obrigatórios
       const newTransaction: Transaction = {
         id: transactions.length + 1,
         description: data.description,
@@ -38,7 +37,7 @@ const Lancamentos = () => {
         supplier: data.supplier,
         status: data.status,
         category: data.category,
-        paymentMethod: data.paymentMethod,
+        paymentMethod: data.paymentMethod || "",
         unit: data.unit,
         amount: data.amount,
         type: data.type,
