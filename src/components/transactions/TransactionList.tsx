@@ -36,12 +36,12 @@ export const TransactionList = ({ transactions, onEdit }: TransactionListProps) 
         {transactions.map((transaction) => (
           <TableRow key={transaction.id}>
             <TableCell>{transaction.description}</TableCell>
-            <TableCell>{transaction.dueDate}</TableCell>
-            <TableCell>{transaction.paymentDate}</TableCell>
+            <TableCell>{transaction.due_date}</TableCell>
+            <TableCell>{transaction.payment_date}</TableCell>
             <TableCell>{transaction.supplier}</TableCell>
             <TableCell>{transaction.status}</TableCell>
             <TableCell>{transaction.category}</TableCell>
-            <TableCell>{transaction.paymentMethod}</TableCell>
+            <TableCell>{transaction.payment_method}</TableCell>
             <TableCell>{transaction.unit}</TableCell>
             <TableCell className={transaction.type === "entrada" ? "text-secondary" : "text-destructive"}>
               R$ {transaction.amount.toLocaleString('pt-BR')}
