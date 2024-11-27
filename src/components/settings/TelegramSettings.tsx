@@ -23,20 +23,16 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
         return;
       }
 
-      const response = await fetch('/api/telegram/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { error } = await supabase.functions.invoke('telegram-test', {
+        body: {
           botToken: settings.find(s => s.key === 'telegram_bot_token')?.value,
           chatId: settings.find(s => s.key === 'telegram_chat_id')?.value,
           message: settings.find(s => s.key === 'telegram_message_template')?.value || 'Teste de notificação',
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Falha ao enviar notificação');
+      if (error) {
+        throw error;
       }
 
       toast.success('Notificação de teste enviada com sucesso!');
