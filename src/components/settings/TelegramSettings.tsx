@@ -1,7 +1,7 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Control, useWatch } from "react-hook-form";
+import { Control, useWatch, useForm } from "react-hook-form";
 import { SettingsFormValues } from "./SettingsForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,11 +31,29 @@ const availableVariables = [
 ];
 
 export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
-  // Monitora o valor atual do campo "telegram_message_template"
+  const { getValues } = useForm<SettingsFormValues>();
   const currentMessageTemplate = useWatch({
     control,
     name: "telegram_message_template",
   });
+
+  const handleSaveSettings = async () => {
+    try {
+      const values = getValues();
+      await supabase
+        .from("settings")
+        .upsert([
+          { key: "telegram_bot_token", value: values.telegram_bot_token },
+          { key: "telegram_chat_id", value: values.telegram_chat_id },
+          { key: "telegram_message_template", value: values.telegram_message_template },
+        ]);
+
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao salvar configurações");
+      console.error(error);
+    }
+  };
 
   const handleTestNotification = async () => {
     try {
@@ -81,7 +99,6 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
           }
         });
 
-        // Envia a mensagem principal
         await supabase.functions.invoke("telegram-test", {
           body: {
             botToken,
@@ -90,7 +107,6 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
           },
         });
 
-        // Envia o código de barras, se houver
         if (transaction.barcode) {
           await supabase.functions.invoke("telegram-test", {
             body: {
@@ -171,9 +187,14 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
         </AlertDescription>
       </Alert>
 
-      <Button type="button" onClick={handleTestNotification}>
-        Testar Notificação
-      </Button>
+      <div className="flex space-x-4">
+        <Button type="button" onClick={handleSaveSettings}>
+          Salvar Configurações
+        </Button>
+        <Button type="button" onClick={handleTestNotification}>
+          Testar Notificação
+        </Button>
+      </div>
     </div>
   );
 };
