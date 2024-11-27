@@ -53,46 +53,47 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
         return;
       }
 
-      let messageTemplate = settings.find(s => s.key === 'telegram_message_template')?.value || 'Teste de notificação';
+      const messageTemplate = settings.find(s => s.key === 'telegram_message_template')?.value || 'Teste de notificação';
+      const botToken = settings.find(s => s.key === 'telegram_bot_token')?.value;
+      const chatId = settings.find(s => s.key === 'telegram_chat_id')?.value;
       
-      const totalAmount = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      const count = transactions.length;
-
-      messageTemplate = messageTemplate
-        .replace(/{totalAmount}/g, totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
-        .replace(/{count}/g, count.toString());
-
-      let transactionsText = '';
-      transactions.forEach((transaction, index) => {
+      // Send each transaction as a separate message
+      for (const transaction of transactions) {
         let transactionTemplate = messageTemplate;
         Object.entries(transaction).forEach(([key, value]) => {
           if (typeof value === 'string' || typeof value === 'number') {
             const regex = new RegExp(`{${key}}`, 'g');
-            const formattedValue = key === 'amount' 
+            const formattedValue = key === 'amount' || key === 'actual_amount'
               ? Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
               : value.toString();
             transactionTemplate = transactionTemplate.replace(regex, formattedValue);
           }
         });
-        transactionsText += `${transactionTemplate}\n\n`;
+
+        // Send the main message
+        await supabase.functions.invoke('telegram-test', {
+          body: {
+            botToken,
+            chatId,
+            message: transactionTemplate.trim(),
+          },
+        });
+
+        // If there's a barcode, send it as a separate message
         if (transaction.barcode) {
-          transactionsText += `Código de barras/PIX:\n${transaction.barcode}\n\n`;
+          await supabase.functions.invoke('telegram-test', {
+            body: {
+              botToken,
+              chatId,
+              message: `Código de barras/PIX:\n${transaction.barcode}`,
+            },
+          });
         }
-      });
+      }
 
-      const { error } = await supabase.functions.invoke('telegram-test', {
-        body: {
-          botToken: settings.find(s => s.key === 'telegram_bot_token')?.value,
-          chatId: settings.find(s => s.key === 'telegram_chat_id')?.value,
-          message: transactionsText.trim(),
-        },
-      });
-
-      if (error) throw error;
-
-      toast.success('Notificação de teste enviada com sucesso!');
+      toast.success('Notificações de teste enviadas com sucesso!');
     } catch (error) {
-      toast.error('Erro ao enviar notificação de teste');
+      toast.error('Erro ao enviar notificações de teste');
       console.error(error);
     }
   };

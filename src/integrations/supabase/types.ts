@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           created_at: string
@@ -38,6 +86,7 @@ export type Database = {
       }
       transactions: {
         Row: {
+          actual_amount: number | null
           amount: number
           barcode: string | null
           category: string
@@ -55,6 +104,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_amount?: number | null
           amount: number
           barcode?: string | null
           category: string
@@ -72,6 +122,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_amount?: number | null
           amount?: number
           barcode?: string | null
           category?: string
