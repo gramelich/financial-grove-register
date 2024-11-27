@@ -39,11 +39,13 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          barcode: string | null
           category: string
           created_at: string
           description: string
           due_date: string
           id: number
+          invoice_number: string | null
           payment_date: string | null
           payment_method: string | null
           status: string
@@ -54,11 +56,13 @@ export type Database = {
         }
         Insert: {
           amount: number
+          barcode?: string | null
           category: string
           created_at?: string
           description: string
           due_date: string
           id?: number
+          invoice_number?: string | null
           payment_date?: string | null
           payment_method?: string | null
           status: string
@@ -69,11 +73,13 @@ export type Database = {
         }
         Update: {
           amount?: number
+          barcode?: string | null
           category?: string
           created_at?: string
           description?: string
           due_date?: string
           id?: number
+          invoice_number?: string | null
           payment_date?: string | null
           payment_method?: string | null
           status?: string

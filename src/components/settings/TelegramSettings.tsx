@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 
 interface TelegramSettingsProps {
   control: Control<SettingsFormValues>;
@@ -25,6 +26,8 @@ const availableVariables = [
   { name: "type", description: "Tipo (entrada/saída)" },
   { name: "totalAmount", description: "Valor total dos lançamentos" },
   { name: "count", description: "Quantidade de lançamentos" },
+  { name: "barcode", description: "Código de barras" },
+  { name: "invoiceNumber", description: "Número da nota fiscal" },
 ];
 
 export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
@@ -40,7 +43,6 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
         return;
       }
 
-      // Get transactions for testing (simulating multiple transactions on the same day)
       const { data: transactions } = await supabase
         .from('transactions')
         .select('*')
@@ -51,44 +53,42 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
         return;
       }
 
-      // Process the message template with the transactions data
       let messageTemplate = settings.find(s => s.key === 'telegram_message_template')?.value || 'Teste de notificação';
       
-      // Calculate total amount and count
       const totalAmount = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
       const count = transactions.length;
 
-      // Replace global variables
       messageTemplate = messageTemplate
-        .replace(/{totalAmount}/g, totalAmount.toString())
+        .replace(/{totalAmount}/g, totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
         .replace(/{count}/g, count.toString());
 
-      // Create a list of transactions if there are multiple
       let transactionsText = '';
       transactions.forEach((transaction, index) => {
         let transactionTemplate = messageTemplate;
         Object.entries(transaction).forEach(([key, value]) => {
           if (typeof value === 'string' || typeof value === 'number') {
             const regex = new RegExp(`{${key}}`, 'g');
-            transactionTemplate = transactionTemplate.replace(regex, value.toString());
+            const formattedValue = key === 'amount' 
+              ? Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+              : value.toString();
+            transactionTemplate = transactionTemplate.replace(regex, formattedValue);
           }
         });
-        transactionsText += `${index + 1}. ${transactionTemplate}\n`;
+        transactionsText += `${transactionTemplate}\n\n`;
+        if (transaction.barcode) {
+          transactionsText += `Código de barras/PIX:\n${transaction.barcode}\n\n`;
+        }
       });
 
       const { error } = await supabase.functions.invoke('telegram-test', {
         body: {
           botToken: settings.find(s => s.key === 'telegram_bot_token')?.value,
           chatId: settings.find(s => s.key === 'telegram_chat_id')?.value,
-          message: count > 1 ? 
-            `Você tem ${count} lançamentos:\n\n${transactionsText}` :
-            transactionsText.trim(),
+          message: transactionsText.trim(),
         },
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast.success('Notificação de teste enviada com sucesso!');
     } catch (error) {
@@ -132,7 +132,11 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
           <FormItem>
             <FormLabel>Modelo de Mensagem</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Ex: {description} - R$ {amount}" />
+              <Textarea 
+                {...field} 
+                placeholder="👋 Olá, o boleto do fornecedor: *{supplier}*&#10;&#10;💰 Valor previsto: *{amount}*&#10;&#10;⚠️ *Vence hoje! - {dueDate}* ⚠️&#10;&#10;Despesa da unidade: *{unit}*" 
+                className="min-h-[200px] font-mono"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

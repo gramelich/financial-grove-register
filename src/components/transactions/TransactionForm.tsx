@@ -17,6 +17,8 @@ const transactionSchema = z.object({
   unit: z.string().min(1, "Unidade é obrigatória"),
   amount: z.number().min(0.01, "Valor deve ser maior que zero"),
   type: z.enum(["entrada", "saida"]),
+  barcode: z.string().optional(),
+  invoiceNumber: z.string().optional(),
 });
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -41,6 +43,8 @@ export const TransactionForm = ({ onSubmit, onClose, initialData }: TransactionF
       unit: "",
       amount: 0,
       type: "entrada",
+      barcode: "",
+      invoiceNumber: "",
     },
   });
 

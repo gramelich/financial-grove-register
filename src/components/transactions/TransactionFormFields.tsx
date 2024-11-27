@@ -188,6 +188,32 @@ export const TransactionFormFields = ({ control }: TransactionFormFieldsProps) =
           </FormItem>
         )}
       />
+      <FormField
+        control={control}
+        name="barcode"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Código de Barras</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="invoiceNumber"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Número da Nota Fiscal</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 };
