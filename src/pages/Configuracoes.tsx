@@ -3,8 +3,38 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 const Configuracoes = () => {
+  const [novaForma, setNovaForma] = useState("");
+  const [formasRecebimento, setFormasRecebimento] = useState<string[]>([]);
+
+  const adicionarFormaRecebimento = () => {
+    if (!novaForma.trim()) {
+      toast.error("Digite uma forma de recebimento");
+      return;
+    }
+    setFormasRecebimento([...formasRecebimento, novaForma]);
+    setNovaForma("");
+    toast.success("Forma de recebimento adicionada");
+  };
+
+  const removerFormaRecebimento = (index: number) => {
+    const novasFormas = formasRecebimento.filter((_, i) => i !== index);
+    setFormasRecebimento(novasFormas);
+    toast.success("Forma de recebimento removida");
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Configurações</h1>
@@ -15,6 +45,7 @@ const Configuracoes = () => {
           <TabsTrigger value="telegram">Telegram</TabsTrigger>
           <TabsTrigger value="disparo">Disparo</TabsTrigger>
           <TabsTrigger value="planos">Planos de Contas</TabsTrigger>
+          <TabsTrigger value="formas">Formas de Recebimento</TabsTrigger>
         </TabsList>
 
         <TabsContent value="supabase">
@@ -70,6 +101,56 @@ const Configuracoes = () => {
               {/* Implementar lista de planos de contas */}
             </div>
             <Button>Adicionar Plano</Button>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="formas">
+          <Card className="p-6 space-y-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="forma">Nova Forma de Recebimento</Label>
+                <Input
+                  id="forma"
+                  placeholder="Digite a forma de recebimento"
+                  value={novaForma}
+                  onChange={(e) => setNovaForma(e.target.value)}
+                />
+              </div>
+              <Button
+                className="mt-6"
+                onClick={adicionarFormaRecebimento}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar
+              </Button>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Forma de Recebimento</TableHead>
+                  <TableHead className="w-24">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {formasRecebimento.map((forma, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{forma}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => removerFormaRecebimento(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
       </Tabs>
