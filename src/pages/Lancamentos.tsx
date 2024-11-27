@@ -12,37 +12,74 @@ import { Plus } from "lucide-react";
 import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { Transaction } from "@/types/transaction";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Lancamentos = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const queryClient = useQueryClient();
 
-  const handleSubmit = (data: TransactionFormValues) => {
+  const { data: transactions = [], isLoading } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast.error('Erro ao carregar lançamentos');
+        throw error;
+      }
+
+      return data;
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: TransactionFormValues) => {
+      const { error } = await supabase
+        .from('transactions')
+        .insert([data]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Lançamento criado com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao criar lançamento');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: TransactionFormValues) => {
+      if (!selectedTransaction) return;
+
+      const { error } = await supabase
+        .from('transactions')
+        .update(data)
+        .eq('id', selectedTransaction.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Lançamento atualizado com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar lançamento');
+    },
+  });
+
+  const handleSubmit = async (data: TransactionFormValues) => {
     if (selectedTransaction) {
-      // Atualizar transação existente
-      const updatedTransactions = transactions.map((t) =>
-        t.id === selectedTransaction.id
-          ? { ...selectedTransaction, ...data }
-          : t
-      );
-      setTransactions(updatedTransactions);
+      await updateMutation.mutateAsync(data);
     } else {
-      // Criar nova transação com todos os campos obrigatórios
-      const newTransaction: Transaction = {
-        id: transactions.length + 1,
-        description: data.description,
-        dueDate: data.dueDate,
-        paymentDate: data.paymentDate,
-        supplier: data.supplier,
-        status: data.status,
-        category: data.category,
-        paymentMethod: data.paymentMethod || "",
-        unit: data.unit,
-        amount: data.amount,
-        type: data.type,
-      };
-      setTransactions([...transactions, newTransaction]);
+      await createMutation.mutateAsync(data);
     }
     setIsDialogOpen(false);
     setSelectedTransaction(null);
@@ -52,6 +89,10 @@ const Lancamentos = () => {
     setSelectedTransaction(transaction);
     setIsDialogOpen(true);
   };
+
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">

@@ -10,4 +10,6 @@ export type Transaction = {
   unit: string;
   amount: number;
   type: "entrada" | "saida";
+  created_at?: string;
+  updated_at?: string;
 };
