@@ -1,7 +1,7 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { SettingsFormValues } from "./SettingsForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,47 +31,58 @@ const availableVariables = [
 ];
 
 export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
+  // Monitora o valor atual do campo "telegram_message_template"
+  const currentMessageTemplate = useWatch({
+    control,
+    name: "telegram_message_template",
+  });
+
   const handleTestNotification = async () => {
     try {
       const { data: settings } = await supabase
-        .from('settings')
-        .select('key, value')
-        .in('key', ['telegram_bot_token', 'telegram_chat_id', 'telegram_message_template']);
+        .from("settings")
+        .select("key, value")
+        .in("key", ["telegram_bot_token", "telegram_chat_id", "telegram_message_template"]);
 
       if (!settings) {
-        toast.error('Configurações não encontradas');
+        toast.error("Configurações não encontradas");
         return;
       }
 
-      const { data: transactions } = await supabase
-        .from('transactions')
-        .select('*')
-        .limit(3);
+      const { data: transactions } = await supabase.from("transactions").select("*").limit(3);
 
       if (!transactions || transactions.length === 0) {
-        toast.error('Nenhum lançamento encontrado para teste');
+        toast.error("Nenhum lançamento encontrado para teste");
         return;
       }
 
-      const messageTemplate = settings.find(s => s.key === 'telegram_message_template')?.value || 'Teste de notificação';
-      const botToken = settings.find(s => s.key === 'telegram_bot_token')?.value;
-      const chatId = settings.find(s => s.key === 'telegram_chat_id')?.value;
-      
-      // Send each transaction as a separate message
+      const botToken = settings.find((s) => s.key === "telegram_bot_token")?.value;
+      const chatId = settings.find((s) => s.key === "telegram_chat_id")?.value;
+
+      if (!botToken || !chatId) {
+        toast.error("Token do bot ou Chat ID não configurados.");
+        return;
+      }
+
+      // Prioriza o valor atual do campo do formulário
+      const messageTemplate =
+        currentMessageTemplate || settings.find((s) => s.key === "telegram_message_template")?.value || "Teste de notificação";
+
       for (const transaction of transactions) {
         let transactionTemplate = messageTemplate;
         Object.entries(transaction).forEach(([key, value]) => {
-          if (typeof value === 'string' || typeof value === 'number') {
-            const regex = new RegExp(`{${key}}`, 'g');
-            const formattedValue = key === 'amount' || key === 'actual_amount'
-              ? Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-              : value.toString();
+          if (typeof value === "string" || typeof value === "number") {
+            const regex = new RegExp(`{${key}}`, "g");
+            const formattedValue =
+              key === "amount" || key === "actual_amount"
+                ? Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                : value.toString();
             transactionTemplate = transactionTemplate.replace(regex, formattedValue);
           }
         });
 
-        // Send the main message
-        await supabase.functions.invoke('telegram-test', {
+        // Envia a mensagem principal
+        await supabase.functions.invoke("telegram-test", {
           body: {
             botToken,
             chatId,
@@ -79,9 +90,9 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
           },
         });
 
-        // If there's a barcode, send it as a separate message
+        // Envia o código de barras, se houver
         if (transaction.barcode) {
-          await supabase.functions.invoke('telegram-test', {
+          await supabase.functions.invoke("telegram-test", {
             body: {
               botToken,
               chatId,
@@ -91,9 +102,9 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
         }
       }
 
-      toast.success('Notificações de teste enviadas com sucesso!');
+      toast.success("Notificações de teste enviadas com sucesso!");
     } catch (error) {
-      toast.error('Erro ao enviar notificações de teste');
+      toast.error("Erro ao enviar notificações de teste");
       console.error(error);
     }
   };
@@ -133,9 +144,9 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
           <FormItem>
             <FormLabel>Modelo de Mensagem</FormLabel>
             <FormControl>
-              <Textarea 
-                {...field} 
-                placeholder="👋 Olá, o boleto do fornecedor: *{supplier}*&#10;&#10;💰 Valor previsto: *{amount}*&#10;&#10;⚠️ *Vence hoje! - {dueDate}* ⚠️&#10;&#10;Despesa da unidade: *{unit}*" 
+              <Textarea
+                {...field}
+                placeholder="👋 Olá, o boleto do fornecedor: *{supplier}*&#10;&#10;💰 Valor previsto: *{amount}*&#10;&#10;⚠️ *Vence hoje! - {dueDate}* ⚠️&#10;&#10;Despesa da unidade: *{unit}*"
                 className="min-h-[200px] font-mono"
               />
             </FormControl>
@@ -143,7 +154,7 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
           </FormItem>
         )}
       />
-      
+
       <Alert>
         <AlertDescription>
           <p className="mb-2">Variáveis disponíveis para o modelo de mensagem:</p>
