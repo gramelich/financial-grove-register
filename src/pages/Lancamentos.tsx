@@ -32,9 +32,18 @@ const Lancamentos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleSubmit = (data: TransactionFormValues) => {
-    const newTransaction = {
-      ...data,
+    const newTransaction: Transaction = {
       id: transactions.length + 1,
+      description: data.description,
+      dueDate: data.dueDate,
+      paymentDate: data.paymentDate,
+      supplier: data.supplier,
+      status: data.status,
+      category: data.category,
+      paymentMethod: data.paymentMethod,
+      unit: data.unit,
+      amount: data.amount,
+      type: data.type,
     };
     setTransactions([...transactions, newTransaction]);
     setIsDialogOpen(false);
