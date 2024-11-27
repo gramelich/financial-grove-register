@@ -1,12 +1,21 @@
 import { Card } from "@/components/ui/card";
 import { ArrowUpCircle, ArrowDownCircle, Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Transaction } from "@/types/transaction";
 
 const Dashboard = () => {
-  // Temporary mock data
+  const { data: transactions = [] } = useQuery<Transaction[]>({
+    queryKey: ['transactions'],
+    queryFn: async () => {
+      // Por enquanto, retorna um array vazio até implementarmos a API
+      return [];
+    },
+  });
+
   const summary = {
-    income: 15000,
-    expenses: 8500,
-    pending: 3200,
+    income: transactions.filter(t => t.type === "entrada").reduce((acc, t) => acc + t.amount, 0),
+    expenses: transactions.filter(t => t.type === "saida").reduce((acc, t) => acc + t.amount, 0),
+    pending: transactions.filter(t => t.status === "pendente").reduce((acc, t) => acc + t.amount, 0),
   };
 
   return (

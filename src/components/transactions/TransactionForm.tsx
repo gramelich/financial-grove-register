@@ -13,7 +13,7 @@ const transactionSchema = z.object({
   supplier: z.string().min(1, "Fornecedor é obrigatório"),
   status: z.string().min(1, "Status é obrigatório"),
   category: z.string().min(1, "Plano de contas é obrigatório"),
-  paymentMethod: z.string().min(1, "Forma de pagamento é obrigatória"),
+  paymentMethod: z.string().optional(),
   unit: z.string().min(1, "Unidade é obrigatória"),
   amount: z.number().min(0.01, "Valor deve ser maior que zero"),
   type: z.enum(["entrada", "saida"]),
@@ -24,12 +24,13 @@ export type TransactionFormValues = z.infer<typeof transactionSchema>;
 interface TransactionFormProps {
   onSubmit: (data: TransactionFormValues) => void;
   onClose: () => void;
+  initialData?: TransactionFormValues;
 }
 
-export const TransactionForm = ({ onSubmit, onClose }: TransactionFormProps) => {
+export const TransactionForm = ({ onSubmit, onClose, initialData }: TransactionFormProps) => {
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
+    defaultValues: initialData || {
       description: "",
       dueDate: "",
       paymentDate: "",
@@ -47,14 +48,14 @@ export const TransactionForm = ({ onSubmit, onClose }: TransactionFormProps) => 
     onSubmit(data);
     form.reset();
     onClose();
-    toast.success("Lançamento criado com sucesso!");
+    toast.success(initialData ? "Lançamento atualizado com sucesso!" : "Lançamento criado com sucesso!");
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <TransactionFormFields control={form.control} />
-        <Button type="submit" className="w-full">Salvar Lançamento</Button>
+        <Button type="submit" className="w-full">{initialData ? 'Atualizar' : 'Salvar'} Lançamento</Button>
       </form>
     </Form>
   );

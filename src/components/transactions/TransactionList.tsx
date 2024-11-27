@@ -7,12 +7,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Transaction } from "@/types/transaction";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 
 interface TransactionListProps {
   transactions: Transaction[];
+  onEdit: (transaction: Transaction) => void;
 }
 
-export const TransactionList = ({ transactions }: TransactionListProps) => {
+export const TransactionList = ({ transactions, onEdit }: TransactionListProps) => {
   return (
     <Table>
       <TableHeader>
@@ -26,6 +29,7 @@ export const TransactionList = ({ transactions }: TransactionListProps) => {
           <TableHead>Forma</TableHead>
           <TableHead>Unidade</TableHead>
           <TableHead>Valor</TableHead>
+          <TableHead>Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -41,6 +45,11 @@ export const TransactionList = ({ transactions }: TransactionListProps) => {
             <TableCell>{transaction.unit}</TableCell>
             <TableCell className={transaction.type === "entrada" ? "text-secondary" : "text-destructive"}>
               R$ {transaction.amount.toLocaleString('pt-BR')}
+            </TableCell>
+            <TableCell>
+              <Button variant="ghost" size="icon" onClick={() => onEdit(transaction)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
             </TableCell>
           </TableRow>
         ))}

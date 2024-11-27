@@ -6,7 +6,7 @@ export type Transaction = {
   supplier: string;
   status: string;
   category: string;
-  paymentMethod: string;
+  paymentMethod?: string;
   unit: string;
   amount: number;
   type: "entrada" | "saida";
