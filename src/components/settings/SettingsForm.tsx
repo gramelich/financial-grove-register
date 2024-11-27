@@ -40,15 +40,19 @@ export const SettingsForm = () => {
       
       if (error) throw error;
       return data;
-    },
-    onSuccess: (data) => {
-      const formValues = data.reduce((acc, setting) => ({
+    }
+  });
+
+  // Set form values when settings are loaded
+  React.useEffect(() => {
+    if (settings) {
+      const formValues = settings.reduce((acc, setting) => ({
         ...acc,
         [setting.key]: setting.value,
       }), {});
       form.reset(formValues);
-    },
-  });
+    }
+  }, [settings, form]);
 
   const updateSettings = useMutation({
     mutationFn: async (values: SettingsFormValues) => {

@@ -15,7 +15,7 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
     try {
       const { data: settings } = await supabase
         .from('settings')
-        .select('value')
+        .select('key, value')
         .in('key', ['telegram_bot_token', 'telegram_chat_id', 'telegram_message_template']);
 
       if (!settings) {
