@@ -16,26 +16,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Função para transformar os dados do formulário para o formato que será enviado ao banco de dados
 const transformFormToDatabase = (data: TransactionFormValues) => ({
   description: data.description,
   due_date: data.dueDate,
   payment_date: data.paymentDate || null,
   supplier: data.supplier,
   status: data.status,
-  category: data.category,
+  category: data.category || null, // Permite que o plano de contas (category) seja null caso o campo esteja vazio
   payment_method: data.paymentMethod || null,
   unit: data.unit,
-  amount: data.amount,
+  amount: data.amount || null, // Permite que o valor seja null caso o campo esteja vazio
   type: data.type,
 });
 
+// Função para transformar os dados do banco de dados para o formato do formulário
 const transformDatabaseToForm = (data: Transaction): TransactionFormValues => ({
   description: data.description,
   dueDate: data.due_date,
   paymentDate: data.payment_date,
   supplier: data.supplier,
   status: data.status,
-  category: data.category,
+  category: data.category, // O campo category também pode vir como null
   paymentMethod: data.payment_method,
   unit: data.unit,
   amount: data.amount,
