@@ -16,6 +16,32 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+const transformFormToDatabase = (data: TransactionFormValues) => ({
+  description: data.description,
+  due_date: data.dueDate,
+  payment_date: data.paymentDate || null,
+  supplier: data.supplier,
+  status: data.status,
+  category: data.category,
+  payment_method: data.paymentMethod || null,
+  unit: data.unit,
+  amount: data.amount,
+  type: data.type,
+});
+
+const transformDatabaseToForm = (data: Transaction): TransactionFormValues => ({
+  description: data.description,
+  dueDate: data.due_date,
+  paymentDate: data.payment_date,
+  supplier: data.supplier,
+  status: data.status,
+  category: data.category,
+  paymentMethod: data.payment_method,
+  unit: data.unit,
+  amount: data.amount,
+  type: data.type,
+});
+
 const Lancamentos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -34,7 +60,7 @@ const Lancamentos = () => {
         throw error;
       }
 
-      return data;
+      return data as Transaction[];
     },
   });
 
@@ -42,7 +68,7 @@ const Lancamentos = () => {
     mutationFn: async (data: TransactionFormValues) => {
       const { error } = await supabase
         .from('transactions')
-        .insert([data]);
+        .insert([transformFormToDatabase(data)]);
 
       if (error) throw error;
     },
@@ -61,7 +87,7 @@ const Lancamentos = () => {
 
       const { error } = await supabase
         .from('transactions')
-        .update(data)
+        .update(transformFormToDatabase(data))
         .eq('id', selectedTransaction.id);
 
       if (error) throw error;
@@ -113,7 +139,7 @@ const Lancamentos = () => {
             <TransactionForm 
               onSubmit={handleSubmit} 
               onClose={() => setIsDialogOpen(false)}
-              initialData={selectedTransaction || undefined}
+              initialData={selectedTransaction ? transformDatabaseToForm(selectedTransaction) : undefined}
             />
           </DialogContent>
         </Dialog>
