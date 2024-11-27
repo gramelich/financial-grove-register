@@ -23,6 +23,8 @@ const availableVariables = [
   { name: "paymentMethod", description: "Forma de pagamento" },
   { name: "unit", description: "Unidade" },
   { name: "type", description: "Tipo (entrada/saída)" },
+  { name: "totalAmount", description: "Valor total dos lançamentos" },
+  { name: "count", description: "Quantidade de lançamentos" },
 ];
 
 export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
@@ -38,34 +40,49 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
         return;
       }
 
-      // Get a sample transaction for testing
+      // Get transactions for testing (simulating multiple transactions on the same day)
       const { data: transactions } = await supabase
         .from('transactions')
         .select('*')
-        .limit(1)
-        .single();
+        .limit(3);
 
-      if (!transactions) {
+      if (!transactions || transactions.length === 0) {
         toast.error('Nenhum lançamento encontrado para teste');
         return;
       }
 
-      // Process the message template with the transaction data
+      // Process the message template with the transactions data
       let messageTemplate = settings.find(s => s.key === 'telegram_message_template')?.value || 'Teste de notificação';
       
-      // Replace variables in the template
-      Object.entries(transactions).forEach(([key, value]) => {
-        if (typeof value === 'string' || typeof value === 'number') {
-          const regex = new RegExp(`{${key}}`, 'g');
-          messageTemplate = messageTemplate.replace(regex, value.toString());
-        }
+      // Calculate total amount and count
+      const totalAmount = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+      const count = transactions.length;
+
+      // Replace global variables
+      messageTemplate = messageTemplate
+        .replace(/{totalAmount}/g, totalAmount.toString())
+        .replace(/{count}/g, count.toString());
+
+      // Create a list of transactions if there are multiple
+      let transactionsText = '';
+      transactions.forEach((transaction, index) => {
+        let transactionTemplate = messageTemplate;
+        Object.entries(transaction).forEach(([key, value]) => {
+          if (typeof value === 'string' || typeof value === 'number') {
+            const regex = new RegExp(`{${key}}`, 'g');
+            transactionTemplate = transactionTemplate.replace(regex, value.toString());
+          }
+        });
+        transactionsText += `${index + 1}. ${transactionTemplate}\n`;
       });
 
       const { error } = await supabase.functions.invoke('telegram-test', {
         body: {
           botToken: settings.find(s => s.key === 'telegram_bot_token')?.value,
           chatId: settings.find(s => s.key === 'telegram_chat_id')?.value,
-          message: messageTemplate,
+          message: count > 1 ? 
+            `Você tem ${count} lançamentos:\n\n${transactionsText}` :
+            transactionsText.trim(),
         },
       });
 
@@ -115,7 +132,7 @@ export const TelegramSettings = ({ control }: TelegramSettingsProps) => {
           <FormItem>
             <FormLabel>Modelo de Mensagem</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Ex: Novo lançamento: {description} - R$ {amount}" />
+              <Input {...field} placeholder="Ex: {description} - R$ {amount}" />
             </FormControl>
             <FormMessage />
           </FormItem>
