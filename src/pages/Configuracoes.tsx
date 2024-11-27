@@ -14,10 +14,48 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Configuracoes = () => {
   const [novaForma, setNovaForma] = useState("");
   const [formasRecebimento, setFormasRecebimento] = useState<string[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const updateSetting = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const { error } = await supabase
+        .from('settings')
+        .update({ value })
+        .eq('key', key);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      toast.success('Configuração atualizada com sucesso');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar configuração');
+      console.error(error);
+    }
+  });
+
+  const handleSettingChange = async (key: string, value: string) => {
+    updateSetting.mutate({ key, value });
+  };
 
   const adicionarFormaRecebimento = () => {
     if (!novaForma.trim()) {
@@ -34,6 +72,10 @@ const Configuracoes = () => {
     setFormasRecebimento(novasFormas);
     toast.success("Forma de recebimento removida");
   };
+
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -52,13 +94,23 @@ const Configuracoes = () => {
           <Card className="p-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="apikey">API Key</Label>
-              <Input id="apikey" placeholder="Sua Supabase API Key" />
+              <Input 
+                id="apikey" 
+                type="password"
+                placeholder="Sua Supabase API Key" 
+                value={settings?.find(s => s.key === 'supabase_api_key')?.value || ''}
+                onChange={(e) => handleSettingChange('supabase_api_key', e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="url">URL do Projeto</Label>
-              <Input id="url" placeholder="URL do seu projeto Supabase" />
+              <Input 
+                id="url" 
+                placeholder="URL do seu projeto Supabase" 
+                value={settings?.find(s => s.key === 'supabase_url')?.value || ''}
+                onChange={(e) => handleSettingChange('supabase_url', e.target.value)}
+              />
             </div>
-            <Button>Salvar Configurações</Button>
           </Card>
         </TabsContent>
 
@@ -66,17 +118,32 @@ const Configuracoes = () => {
           <Card className="p-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="token">Token do Bot</Label>
-              <Input id="token" placeholder="Token do seu bot Telegram" />
+              <Input 
+                id="token" 
+                type="password"
+                placeholder="Token do seu bot Telegram" 
+                value={settings?.find(s => s.key === 'telegram_bot_token')?.value || ''}
+                onChange={(e) => handleSettingChange('telegram_bot_token', e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="chatid">Chat ID</Label>
-              <Input id="chatid" placeholder="ID do chat" />
+              <Input 
+                id="chatid" 
+                placeholder="ID do chat" 
+                value={settings?.find(s => s.key === 'telegram_chat_id')?.value || ''}
+                onChange={(e) => handleSettingChange('telegram_chat_id', e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">Modelo de Mensagem</Label>
-              <Input id="message" placeholder="Configure sua mensagem" />
+              <Input 
+                id="message" 
+                placeholder="Configure sua mensagem" 
+                value={settings?.find(s => s.key === 'telegram_message_template')?.value || ''}
+                onChange={(e) => handleSettingChange('telegram_message_template', e.target.value)}
+              />
             </div>
-            <Button>Salvar Configurações</Button>
           </Card>
         </TabsContent>
 
@@ -84,13 +151,13 @@ const Configuracoes = () => {
           <Card className="p-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="schedule">Agendamento</Label>
-              <Input id="schedule" type="time" />
+              <Input 
+                id="schedule" 
+                type="time" 
+                value={settings?.find(s => s.key === 'notification_schedule')?.value || ''}
+                onChange={(e) => handleSettingChange('notification_schedule', e.target.value)}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="conditions">Condições</Label>
-              <Input id="conditions" placeholder="Configure as condições de disparo" />
-            </div>
-            <Button>Testar Disparo</Button>
           </Card>
         </TabsContent>
 
