@@ -51,7 +51,7 @@ export const TransactionFilters = ({ filters, onFilterChange, onSearch }: Transa
               <SelectValue placeholder="Selecione o tipo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="entrada">Entrada</SelectItem>
               <SelectItem value="saida">Saída</SelectItem>
             </SelectContent>
@@ -67,7 +67,7 @@ export const TransactionFilters = ({ filters, onFilterChange, onSearch }: Transa
               <SelectValue placeholder="Selecione o status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="pendente">Pendente</SelectItem>
               <SelectItem value="pago">Pago</SelectItem>
               <SelectItem value="cancelado">Cancelado</SelectItem>
@@ -84,7 +84,7 @@ export const TransactionFilters = ({ filters, onFilterChange, onSearch }: Transa
               <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               <SelectItem value="vendas">Vendas</SelectItem>
               <SelectItem value="servicos">Serviços</SelectItem>
               <SelectItem value="impostos">Impostos</SelectItem>

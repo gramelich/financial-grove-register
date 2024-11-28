@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { Transaction } from "@/types/transaction";
@@ -17,52 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 
-const Lancamentos = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [filters, setFilters] = useState({
-    startDate: "",
-    endDate: "",
-    type: "",
-    status: "",
-    category: "",
-  });
-  const [showResults, setShowResults] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions', filters, showResults],
-    queryFn: async () => {
-      if (!showResults) return [];
-      
-      let query = supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (filters.startDate) {
-        query = query.gte('due_date', filters.startDate);
-      }
-      if (filters.endDate) {
-        query = query.lte('due_date', filters.endDate);
-      }
-      if (filters.type) {
-        query = query.eq('type', filters.type);
-      }
-      if (filters.status) {
-        query = query.eq('status', filters.status);
-      }
-      if (filters.category) {
-        query = query.eq('category', filters.category);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Transaction[];
-    },
-    enabled: showResults,
-  });
-
+// Separate the mutation logic
+const useTransactionMutations = (queryClient: any, setIsDialogOpen: (open: boolean) => void) => {
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
       const { error } = await supabase
@@ -94,8 +50,8 @@ const Lancamentos = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: TransactionFormValues) => {
-      if (!selectedTransaction) return;
+    mutationFn: async (data: TransactionFormValues & { id?: number }) => {
+      if (!data.id) return;
 
       const { error } = await supabase
         .from('transactions')
@@ -114,25 +70,77 @@ const Lancamentos = () => {
           barcode: data.barcode || null,
           invoice_number: data.invoiceNumber || null,
         })
-        .eq('id', selectedTransaction.id);
+        .eq('id', data.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast.success('Lançamento atualizado com sucesso!');
+      setIsDialogOpen(false);
     },
     onError: () => {
       toast.error('Erro ao atualizar lançamento');
     },
   });
 
+  return { createMutation, updateMutation };
+};
+
+const Lancamentos = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [filters, setFilters] = useState({
+    startDate: "",
+    endDate: "",
+    type: "all",
+    status: "all",
+    category: "all",
+  });
+  const [showResults, setShowResults] = useState(false);
+  const queryClient = useQueryClient();
+  
+  const { createMutation, updateMutation } = useTransactionMutations(queryClient, setIsDialogOpen);
+
+  const { data: transactions = [], isLoading } = useQuery({
+    queryKey: ['transactions', filters, showResults],
+    queryFn: async () => {
+      if (!showResults) return [];
+      
+      let query = supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (filters.startDate) {
+        query = query.gte('due_date', filters.startDate);
+      }
+      if (filters.endDate) {
+        query = query.lte('due_date', filters.endDate);
+      }
+      if (filters.type !== 'all') {
+        query = query.eq('type', filters.type);
+      }
+      if (filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+      if (filters.category !== 'all') {
+        query = query.eq('category', filters.category);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Transaction[];
+    },
+    enabled: showResults,
+  });
+
   const handleSubmit = async (data: TransactionFormValues) => {
     if (selectedTransaction) {
-      await updateMutation.mutateAsync(data);
+      await updateMutation.mutateAsync({ ...data, id: selectedTransaction.id });
     } else {
       await createMutation.mutateAsync(data);
+      setIsDialogOpen(false);
     }
-    setIsDialogOpen(false);
     setSelectedTransaction(null);
   };
 
@@ -179,7 +187,7 @@ const Lancamentos = () => {
                 unit: selectedTransaction.unit,
                 amount: selectedTransaction.amount,
                 actualAmount: selectedTransaction.actual_amount || 0,
-                type: selectedTransaction.type as "entrada" | "saida",
+                type: selectedTransaction.type,
                 barcode: selectedTransaction.barcode || "",
                 invoiceNumber: selectedTransaction.invoice_number || "",
               } : undefined}
