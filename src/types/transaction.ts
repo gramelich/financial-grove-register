@@ -12,6 +12,9 @@ export type Transaction = {
   type: "entrada" | "saida";
   created_at?: string;
   updated_at?: string;
+  actual_amount?: number | null;  // Added this property
+  barcode?: string | null;        // Added this property
+  invoice_number?: string | null; // Added this property
 };
 
 export type TransactionFormValues = {
@@ -25,4 +28,7 @@ export type TransactionFormValues = {
   unit: string;
   amount: number;
   type: "entrada" | "saida";
+  actualAmount?: number;
+  barcode?: string;
+  invoiceNumber?: string;
 };
