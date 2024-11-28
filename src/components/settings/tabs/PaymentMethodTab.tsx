@@ -46,7 +46,7 @@ export const PaymentMethodTab = () => {
       <div className="space-y-6">
         <h3 className="text-lg font-medium">Adicionar Nova Forma de Pagamento</h3>
         <PaymentMethodForm 
-          onSubmit={(values) => createPaymentMethod.mutate(values)}
+          onSubmit={(values: PaymentMethodFormData) => createPaymentMethod.mutate(values)}
           submitLabel="Criar Forma de Pagamento"
         />
 

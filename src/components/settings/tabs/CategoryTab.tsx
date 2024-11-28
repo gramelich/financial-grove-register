@@ -46,7 +46,7 @@ export const CategoryTab = () => {
       <div className="space-y-6">
         <h3 className="text-lg font-medium">Adicionar Nova Categoria</h3>
         <CategoryForm 
-          onSubmit={(values) => createCategory.mutate(values)}
+          onSubmit={(values: CategoryFormData) => createCategory.mutate(values)}
           submitLabel="Criar Categoria"
         />
 
