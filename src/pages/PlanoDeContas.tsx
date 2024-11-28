@@ -15,15 +15,16 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
+import { PlanoDeContasSettings } from "@/components/settings/PlanoDeContasSettings";
 
 const categorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional(),
+  status: z.enum(["ativo", "inativo"]),
 });
 
-type CategoryFormValues = z.infer<typeof categorySchema>;
+export type CategoryFormValues = z.infer<typeof categorySchema>;
 
 const PlanoDeContas = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -35,6 +36,7 @@ const PlanoDeContas = () => {
     defaultValues: {
       name: "",
       description: "",
+      status: "ativo",
     },
   });
 
@@ -88,6 +90,20 @@ const PlanoDeContas = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Plano de contas excluído com sucesso!');
+    },
+  });
+
   const onSubmit = (values: CategoryFormValues) => {
     if (selectedCategory) {
       updateMutation.mutate(values);
@@ -119,32 +135,7 @@ const PlanoDeContas = () => {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <PlanoDeContasSettings control={form.control} />
                 <Button type="submit" className="w-full">
                   {selectedCategory ? 'Atualizar' : 'Criar'} Plano de Contas
                 </Button>
@@ -164,16 +155,26 @@ const PlanoDeContas = () => {
                   <p className="text-sm text-gray-500">{category.description}</p>
                 )}
               </div>
-              <Button variant="ghost" onClick={() => {
-                setSelectedCategory(category);
-                form.reset({
-                  name: category.name,
-                  description: category.description || '',
-                });
-                setIsDialogOpen(true);
-              }}>
-                Editar
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => {
+                  setSelectedCategory(category);
+                  form.reset({
+                    name: category.name,
+                    description: category.description || '',
+                    status: "ativo",
+                  });
+                  setIsDialogOpen(true);
+                }}>
+                  Editar
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => deleteMutation.mutate(category.id)}
+                >
+                  Excluir
+                </Button>
+              </div>
             </div>
           ))}
         </div>

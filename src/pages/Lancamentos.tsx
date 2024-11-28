@@ -17,7 +17,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 
-// Separate the mutation logic
 const useTransactionMutations = (queryClient: any, setIsDialogOpen: (open: boolean) => void) => {
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
@@ -83,7 +82,24 @@ const useTransactionMutations = (queryClient: any, setIsDialogOpen: (open: boole
     },
   });
 
-  return { createMutation, updateMutation };
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Lançamento excluído com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir lançamento');
+    },
+  });
+
+  return { createMutation, updateMutation, deleteMutation };
 };
 
 const Lancamentos = () => {
@@ -99,7 +115,7 @@ const Lancamentos = () => {
   const [showResults, setShowResults] = useState(false);
   const queryClient = useQueryClient();
   
-  const { createMutation, updateMutation } = useTransactionMutations(queryClient, setIsDialogOpen);
+  const { createMutation, updateMutation, deleteMutation } = useTransactionMutations(queryClient, setIsDialogOpen);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', filters, showResults],
@@ -147,6 +163,10 @@ const Lancamentos = () => {
   const handleEdit = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (transaction: Transaction) => {
+    await deleteMutation.mutateAsync(transaction.id);
   };
 
   const handleSearch = () => {
@@ -209,6 +229,7 @@ const Lancamentos = () => {
           <TransactionList 
             transactions={transactions} 
             onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         </Card>
       )}

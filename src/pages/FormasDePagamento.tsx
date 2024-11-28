@@ -88,6 +88,20 @@ const FormasDePagamento = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from('payment_methods')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payment_methods'] });
+      toast.success('Forma de pagamento excluída com sucesso!');
+    },
+  });
+
   const onSubmit = (values: PaymentMethodFormValues) => {
     if (selectedMethod) {
       updateMutation.mutate(values);
@@ -164,16 +178,25 @@ const FormasDePagamento = () => {
                   <p className="text-sm text-gray-500">{method.description}</p>
                 )}
               </div>
-              <Button variant="ghost" onClick={() => {
-                setSelectedMethod(method);
-                form.reset({
-                  name: method.name,
-                  description: method.description || '',
-                });
-                setIsDialogOpen(true);
-              }}>
-                Editar
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => {
+                  setSelectedMethod(method);
+                  form.reset({
+                    name: method.name,
+                    description: method.description || '',
+                  });
+                  setIsDialogOpen(true);
+                }}>
+                  Editar
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => deleteMutation.mutate(method.id)}
+                >
+                  Excluir
+                </Button>
+              </div>
             </div>
           ))}
         </div>
