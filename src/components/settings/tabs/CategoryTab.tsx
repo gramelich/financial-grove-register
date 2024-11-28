@@ -4,6 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type CategoryFormData = {
+  name: string;
+  description?: string;
+};
+
 export const CategoryTab = () => {
   const queryClient = useQueryClient();
 
@@ -21,7 +26,7 @@ export const CategoryTab = () => {
   });
 
   const createCategory = useMutation({
-    mutationFn: async (values: { name: string; description?: string }) => {
+    mutationFn: async (values: CategoryFormData) => {
       const { error } = await supabase
         .from('categories')
         .insert([values]);
@@ -41,12 +46,7 @@ export const CategoryTab = () => {
       <div className="space-y-6">
         <h3 className="text-lg font-medium">Adicionar Nova Categoria</h3>
         <CategoryForm 
-          onSubmit={(values) => {
-            // Ensure name is not undefined before calling mutation
-            if (values.name) {
-              createCategory.mutate(values);
-            }
-          }}
+          onSubmit={(values) => createCategory.mutate(values)}
           submitLabel="Criar Categoria"
         />
 

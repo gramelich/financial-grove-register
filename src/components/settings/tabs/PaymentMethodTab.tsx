@@ -4,6 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type PaymentMethodFormData = {
+  name: string;
+  description?: string;
+};
+
 export const PaymentMethodTab = () => {
   const queryClient = useQueryClient();
 
@@ -21,7 +26,7 @@ export const PaymentMethodTab = () => {
   });
 
   const createPaymentMethod = useMutation({
-    mutationFn: async (values: { name: string; description?: string }) => {
+    mutationFn: async (values: PaymentMethodFormData) => {
       const { error } = await supabase
         .from('payment_methods')
         .insert([values]);
@@ -41,12 +46,7 @@ export const PaymentMethodTab = () => {
       <div className="space-y-6">
         <h3 className="text-lg font-medium">Adicionar Nova Forma de Pagamento</h3>
         <PaymentMethodForm 
-          onSubmit={(values) => {
-            // Ensure name is not undefined before calling mutation
-            if (values.name) {
-              createPaymentMethod.mutate(values);
-            }
-          }}
+          onSubmit={(values) => createPaymentMethod.mutate(values)}
           submitLabel="Criar Forma de Pagamento"
         />
 
