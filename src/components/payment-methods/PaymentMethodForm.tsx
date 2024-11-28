@@ -19,6 +19,7 @@ const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }) => {
           {...register("name", { required: true })}
           className="mt-1 p-2 border border-gray-300 rounded"
           placeholder="Digite o nome da forma de pagamento"
+          required
         />
       </div>
       <div>
