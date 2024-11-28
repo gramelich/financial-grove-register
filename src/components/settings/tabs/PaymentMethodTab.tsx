@@ -1,5 +1,5 @@
 // src/components/settings/tabs/PaymentMethodTab.tsx
-import PaymentMethodForm from "@/components/payment-methods/PaymentMethodForm"; // Corrigido para exportação padrão
+import PaymentMethodForm from "@/components/payment-methods/PaymentMethodForm";
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,7 @@ export const PaymentMethodTab = () => {
         .from('payment_methods')
         .select('*')
         .order('name');
-      
+
       if (error) throw error;
       return data;
     }
@@ -47,7 +47,10 @@ export const PaymentMethodTab = () => {
       <div className="space-y-6">
         <h3 className="text-lg font-medium">Adicionar Nova Forma de Pagamento</h3>
         <PaymentMethodForm 
-          onSubmit={(values: PaymentMethodFormData) => createPaymentMethod.mutate(values)}
+          onSubmit={(values: PaymentMethodFormData) => {
+            console.log("Submitting:", values); // Log para ver os valores
+            createPaymentMethod.mutate(values);
+          }}
           submitLabel="Criar Forma de Pagamento"
         />
 
