@@ -2,7 +2,16 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Control } from "react-hook-form";
-import { CategoryFormValues } from "./PlanoDeContas"; // Assumindo que essa seja a interface do formulário de categorias
+import { z } from "zod";
+
+// Define the category schema and form values directly in this file
+const categorySchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  description: z.string().optional(),
+  status: z.enum(["ativo", "inativo"]),
+});
+
+export type CategoryFormValues = z.infer<typeof categorySchema>;
 
 interface PlanoDeContasSettingsProps {
   control: Control<CategoryFormValues>;
