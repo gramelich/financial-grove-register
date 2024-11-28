@@ -8,70 +8,80 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { TransactionForm, TransactionFormValues } from "@/components/transactions/TransactionForm";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { Transaction } from "@/types/transaction";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-// Função para transformar os dados do formulário para o formato que será enviado ao banco de dados
-const transformFormToDatabase = (data: TransactionFormValues) => ({
-  description: data.description,
-  due_date: data.dueDate,
-  payment_date: data.paymentDate || null,
-  supplier: data.supplier,
-  status: data.status,
-  category: data.category || null, // Permite que o plano de contas (category) seja null caso o campo esteja vazio
-  payment_method: data.paymentMethod || null,
-  unit: data.unit,
-  amount: data.amount || null, // Permite que o valor seja null caso o campo esteja vazio
-  type: data.type,
-});
-
-// Função para transformar os dados do banco de dados para o formato do formulário
-const transformDatabaseToForm = (data: Transaction): TransactionFormValues => ({
-  description: data.description,
-  dueDate: data.due_date,
-  paymentDate: data.payment_date,
-  supplier: data.supplier,
-  status: data.status,
-  category: data.category, // O campo category também pode vir como null
-  paymentMethod: data.payment_method,
-  unit: data.unit,
-  amount: data.amount,
-  type: data.type,
-});
+import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 
 const Lancamentos = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [filters, setFilters] = useState({
+    startDate: "",
+    endDate: "",
+    type: "",
+    status: "",
+    category: "",
+  });
+  const [showResults, setShowResults] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions'],
+    queryKey: ['transactions', filters, showResults],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!showResults) return [];
+      
+      let query = supabase
         .from('transactions')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        toast.error('Erro ao carregar lançamentos');
-        throw error;
+      if (filters.startDate) {
+        query = query.gte('due_date', filters.startDate);
+      }
+      if (filters.endDate) {
+        query = query.lte('due_date', filters.endDate);
+      }
+      if (filters.type) {
+        query = query.eq('type', filters.type);
+      }
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+      if (filters.category) {
+        query = query.eq('category', filters.category);
       }
 
+      const { data, error } = await query;
+      if (error) throw error;
       return data as Transaction[];
     },
+    enabled: showResults,
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
       const { error } = await supabase
         .from('transactions')
-        .insert([transformFormToDatabase(data)]);
-
+        .insert([{
+          description: data.description,
+          due_date: data.dueDate,
+          payment_date: data.paymentDate || null,
+          supplier: data.supplier,
+          status: data.status,
+          category: data.category,
+          payment_method: data.paymentMethod || null,
+          unit: data.unit,
+          amount: data.amount,
+          actual_amount: data.actualAmount || null,
+          type: data.type,
+          barcode: data.barcode || null,
+          invoice_number: data.invoiceNumber || null,
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -89,9 +99,22 @@ const Lancamentos = () => {
 
       const { error } = await supabase
         .from('transactions')
-        .update(transformFormToDatabase(data))
+        .update({
+          description: data.description,
+          due_date: data.dueDate,
+          payment_date: data.paymentDate || null,
+          supplier: data.supplier,
+          status: data.status,
+          category: data.category,
+          payment_method: data.paymentMethod || null,
+          unit: data.unit,
+          amount: data.amount,
+          actual_amount: data.actualAmount || null,
+          type: data.type,
+          barcode: data.barcode || null,
+          invoice_number: data.invoiceNumber || null,
+        })
         .eq('id', selectedTransaction.id);
-
       if (error) throw error;
     },
     onSuccess: () => {
@@ -118,6 +141,10 @@ const Lancamentos = () => {
     setIsDialogOpen(true);
   };
 
+  const handleSearch = () => {
+    setShowResults(true);
+  };
+
   if (isLoading) {
     return <div>Carregando...</div>;
   }
@@ -141,18 +168,42 @@ const Lancamentos = () => {
             <TransactionForm 
               onSubmit={handleSubmit} 
               onClose={() => setIsDialogOpen(false)}
-              initialData={selectedTransaction ? transformDatabaseToForm(selectedTransaction) : undefined}
+              initialData={selectedTransaction ? {
+                description: selectedTransaction.description,
+                dueDate: selectedTransaction.due_date,
+                paymentDate: selectedTransaction.payment_date || "",
+                supplier: selectedTransaction.supplier,
+                status: selectedTransaction.status,
+                category: selectedTransaction.category,
+                paymentMethod: selectedTransaction.payment_method || "",
+                unit: selectedTransaction.unit,
+                amount: selectedTransaction.amount,
+                actualAmount: selectedTransaction.actual_amount || 0,
+                type: selectedTransaction.type as "entrada" | "saida",
+                barcode: selectedTransaction.barcode || "",
+                invoiceNumber: selectedTransaction.invoice_number || "",
+              } : undefined}
             />
           </DialogContent>
         </Dialog>
       </div>
 
-      <Card>
-        <TransactionList 
-          transactions={transactions} 
-          onEdit={handleEdit}
+      <Card className="p-6">
+        <TransactionFilters 
+          filters={filters} 
+          onFilterChange={setFilters}
+          onSearch={handleSearch}
         />
       </Card>
+
+      {showResults && (
+        <Card>
+          <TransactionList 
+            transactions={transactions} 
+            onEdit={handleEdit}
+          />
+        </Card>
+      )}
     </div>
   );
 };
