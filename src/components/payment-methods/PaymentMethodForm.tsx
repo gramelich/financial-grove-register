@@ -1,6 +1,6 @@
 // src/components/payment-methods/PaymentMethodForm.tsx
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; // Verifique se o Button não está causando problemas
 import { useForm } from "react-hook-form";
 
 const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }) => {
@@ -8,8 +8,13 @@ const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }) => {
     defaultValues,
   });
 
+  const handleFormSubmit = (data) => {
+    console.log("Form submitted:", data); // Adicionando log para depuração
+    onSubmit(data); // Chama a função onSubmit passada como prop
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
       <div>
         <label htmlFor="name" className="block text-sm font-medium">
           Nome
@@ -33,7 +38,7 @@ const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }) => {
           placeholder="Digite uma descrição (opcional)"
         />
       </div>
-      <Button type="submit">{submitLabel}</Button>
+      <button type="submit">{submitLabel}</button> {/* Mudei para um botão padrão para depuração */}
     </form>
   );
 };
