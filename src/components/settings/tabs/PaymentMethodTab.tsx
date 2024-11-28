@@ -1,4 +1,5 @@
-import { PaymentMethodForm } from "@/components/payment-methods/PaymentMethodForm";
+// src/components/settings/tabs/PaymentMethodTab.tsx
+import PaymentMethodForm from "@/components/payment-methods/PaymentMethodForm"; // Corrigido para exportação padrão
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
