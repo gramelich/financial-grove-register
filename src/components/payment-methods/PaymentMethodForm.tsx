@@ -13,7 +13,7 @@ const paymentMethodSchema = z.object({
 type PaymentMethodFormValues = z.infer<typeof paymentMethodSchema>;
 
 interface PaymentMethodFormProps {
-  defaultValues?: PaymentMethodFormValues;
+  defaultValues?: Partial<PaymentMethodFormValues>;
   onSubmit: (values: PaymentMethodFormValues) => void;
   submitLabel: string;
 }
@@ -21,9 +21,9 @@ interface PaymentMethodFormProps {
 export const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }: PaymentMethodFormProps) => {
   const form = useForm<PaymentMethodFormValues>({
     resolver: zodResolver(paymentMethodSchema),
-    defaultValues: defaultValues || {
-      name: "",
-      description: "",
+    defaultValues: {
+      name: defaultValues?.name || "",
+      description: defaultValues?.description || "",
     },
   });
 

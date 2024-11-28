@@ -13,7 +13,7 @@ const categorySchema = z.object({
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
 interface CategoryFormProps {
-  defaultValues?: CategoryFormValues;
+  defaultValues?: Partial<CategoryFormValues>;
   onSubmit: (values: CategoryFormValues) => void;
   submitLabel: string;
 }
@@ -21,9 +21,9 @@ interface CategoryFormProps {
 export const CategoryForm = ({ defaultValues, onSubmit, submitLabel }: CategoryFormProps) => {
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: defaultValues || {
-      name: "",
-      description: "",
+    defaultValues: {
+      name: defaultValues?.name || "",
+      description: defaultValues?.description || "",
     },
   });
 
