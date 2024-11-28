@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Receipt, Settings } from "lucide-react";
+import { LayoutDashboard, Receipt, Settings, FileText, CreditCard } from "lucide-react";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -7,6 +7,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Lançamentos", href: "/lancamentos", icon: Receipt },
+    { name: "Plano de Contas", href: "/plano-de-contas", icon: FileText },
+    { name: "Formas de Pagamento", href: "/formas-de-pagamento", icon: CreditCard },
     { name: "Configurações", href: "/configuracoes", icon: Settings },
   ];
 

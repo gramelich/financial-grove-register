@@ -12,31 +12,12 @@ import { Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-
-const paymentMethodSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  description: z.string().optional(),
-});
-
-type PaymentMethodFormValues = z.infer<typeof paymentMethodSchema>;
+import { PaymentMethodForm } from "@/components/payment-methods/PaymentMethodForm";
 
 const FormasDePagamento = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<any>(null);
   const queryClient = useQueryClient();
-
-  const form = useForm<PaymentMethodFormValues>({
-    resolver: zodResolver(paymentMethodSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-    },
-  });
 
   const { data: paymentMethods, isLoading } = useQuery({
     queryKey: ['payment_methods'],
@@ -51,31 +32,27 @@ const FormasDePagamento = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (values: PaymentMethodFormValues) => {
+    mutationFn: async (values: { name: string; description?: string }) => {
       const { error } = await supabase
         .from('payment_methods')
-        .insert([{ 
-          name: values.name,
-          description: values.description 
-        }]);
+        .insert([values]);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment_methods'] });
       setIsDialogOpen(false);
-      form.reset();
       toast.success('Forma de pagamento criada com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao criar forma de pagamento');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (values: PaymentMethodFormValues) => {
+    mutationFn: async (values: { name: string; description?: string }) => {
       const { error } = await supabase
         .from('payment_methods')
-        .update({ 
-          name: values.name,
-          description: values.description 
-        })
+        .update(values)
         .eq('id', selectedMethod.id);
       if (error) throw error;
     },
@@ -83,8 +60,10 @@ const FormasDePagamento = () => {
       queryClient.invalidateQueries({ queryKey: ['payment_methods'] });
       setIsDialogOpen(false);
       setSelectedMethod(null);
-      form.reset();
       toast.success('Forma de pagamento atualizada com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar forma de pagamento');
     },
   });
 
@@ -100,9 +79,12 @@ const FormasDePagamento = () => {
       queryClient.invalidateQueries({ queryKey: ['payment_methods'] });
       toast.success('Forma de pagamento excluída com sucesso!');
     },
+    onError: () => {
+      toast.error('Erro ao excluir forma de pagamento');
+    },
   });
 
-  const onSubmit = (values: PaymentMethodFormValues) => {
+  const handleSubmit = (values: { name: string; description?: string }) => {
     if (selectedMethod) {
       updateMutation.mutate(values);
     } else {
@@ -120,7 +102,6 @@ const FormasDePagamento = () => {
           <DialogTrigger asChild>
             <Button onClick={() => {
               setSelectedMethod(null);
-              form.reset();
             }}>
               <Plus className="mr-2 h-4 w-4" /> Nova Forma de Pagamento
             </Button>
@@ -131,39 +112,11 @@ const FormasDePagamento = () => {
                 {selectedMethod ? 'Editar' : 'Nova'} Forma de Pagamento
               </DialogTitle>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full">
-                  {selectedMethod ? 'Atualizar' : 'Criar'} Forma de Pagamento
-                </Button>
-              </form>
-            </Form>
+            <PaymentMethodForm
+              defaultValues={selectedMethod}
+              onSubmit={handleSubmit}
+              submitLabel={selectedMethod ? 'Atualizar' : 'Criar'}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -181,10 +134,6 @@ const FormasDePagamento = () => {
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => {
                   setSelectedMethod(method);
-                  form.reset({
-                    name: method.name,
-                    description: method.description || '',
-                  });
                   setIsDialogOpen(true);
                 }}>
                   Editar

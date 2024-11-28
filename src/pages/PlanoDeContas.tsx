@@ -12,33 +12,12 @@ import { Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@/components/ui/form";
-import { PlanoDeContasSettings } from "@/components/settings/PlanoDeContasSettings";
-
-const categorySchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  description: z.string().optional(),
-  status: z.enum(["ativo", "inativo"]),
-});
-
-export type CategoryFormValues = z.infer<typeof categorySchema>;
+import { CategoryForm } from "@/components/categories/CategoryForm";
 
 const PlanoDeContas = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const queryClient = useQueryClient();
-
-  const form = useForm<CategoryFormValues>({
-    resolver: zodResolver(categorySchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      status: "ativo",
-    },
-  });
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
@@ -53,31 +32,27 @@ const PlanoDeContas = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (values: CategoryFormValues) => {
+    mutationFn: async (values: { name: string; description?: string }) => {
       const { error } = await supabase
         .from('categories')
-        .insert([{ 
-          name: values.name,
-          description: values.description 
-        }]);
+        .insert([values]);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setIsDialogOpen(false);
-      form.reset();
-      toast.success('Plano de contas criado com sucesso!');
+      toast.success('Categoria criada com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao criar categoria');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (values: CategoryFormValues) => {
+    mutationFn: async (values: { name: string; description?: string }) => {
       const { error } = await supabase
         .from('categories')
-        .update({ 
-          name: values.name,
-          description: values.description 
-        })
+        .update(values)
         .eq('id', selectedCategory.id);
       if (error) throw error;
     },
@@ -85,8 +60,10 @@ const PlanoDeContas = () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setIsDialogOpen(false);
       setSelectedCategory(null);
-      form.reset();
-      toast.success('Plano de contas atualizado com sucesso!');
+      toast.success('Categoria atualizada com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar categoria');
     },
   });
 
@@ -100,11 +77,14 @@ const PlanoDeContas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Plano de contas excluído com sucesso!');
+      toast.success('Categoria excluída com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir categoria');
     },
   });
 
-  const onSubmit = (values: CategoryFormValues) => {
+  const handleSubmit = (values: { name: string; description?: string }) => {
     if (selectedCategory) {
       updateMutation.mutate(values);
     } else {
@@ -122,25 +102,21 @@ const PlanoDeContas = () => {
           <DialogTrigger asChild>
             <Button onClick={() => {
               setSelectedCategory(null);
-              form.reset();
             }}>
-              <Plus className="mr-2 h-4 w-4" /> Novo Plano de Contas
+              <Plus className="mr-2 h-4 w-4" /> Nova Categoria
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {selectedCategory ? 'Editar' : 'Novo'} Plano de Contas
+                {selectedCategory ? 'Editar' : 'Nova'} Categoria
               </DialogTitle>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <PlanoDeContasSettings control={form.control} />
-                <Button type="submit" className="w-full">
-                  {selectedCategory ? 'Atualizar' : 'Criar'} Plano de Contas
-                </Button>
-              </form>
-            </Form>
+            <CategoryForm
+              defaultValues={selectedCategory}
+              onSubmit={handleSubmit}
+              submitLabel={selectedCategory ? 'Atualizar' : 'Criar'}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -158,11 +134,6 @@ const PlanoDeContas = () => {
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => {
                   setSelectedCategory(category);
-                  form.reset({
-                    name: category.name,
-                    description: category.description || '',
-                    status: "ativo",
-                  });
                   setIsDialogOpen(true);
                 }}>
                   Editar
