@@ -9,37 +9,39 @@ export const CategoryTab = () => {
 
   // Query para carregar as categorias
   const { data: categories, isLoading, isError } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-      
+        .from("categories")
+        .select("*")
+        .order("name");
+
       if (error) {
         throw new Error(error.message); // Lançando erro com a mensagem
       }
       return data;
-    }
+    },
   });
 
   // Mutação para criar categoria
   const createCategory = useMutation({
     mutationFn: async (values: CategoryFormData) => {
       const { error } = await supabase
-        .from('categories')
-        .insert([{
-          name: values.name,
-          description: values.description || null
-        }]);
+        .from("categories")
+        .insert([
+          {
+            name: values.name,
+            description: values.description || null,
+          },
+        ]);
 
       if (error) {
         throw new Error(error.message); // Lançando erro com a mensagem
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Categoria criada com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Categoria criada com sucesso!");
     },
     onError: (error: Error) => {
       console.error("Erro ao criar categoria:", error); // Logando o erro no console
@@ -60,9 +62,10 @@ export const CategoryTab = () => {
     <Card className="p-6">
       <div className="space-y-6">
         <h3 className="text-lg font-medium">Nova Categoria</h3>
-        <CategoryForm 
+        <CategoryForm
           onSubmit={(values) => {
-            console.log("Enviando valores:", values);  // Log dos valores do formulário
+            alert(`Adicionando categoria:\nNome: ${values.name}\nDescrição: ${values.description || "Nenhuma"}`);
+            console.log("Enviando valores:", values); // Log dos valores do formulário
             createCategory.mutate(values);
           }}
           submitLabel="Criar Categoria"
@@ -72,7 +75,10 @@ export const CategoryTab = () => {
           <h3 className="text-lg font-medium mb-4">Categorias Existentes</h3>
           <div className="space-y-4">
             {categories?.map((category) => (
-              <div key={category.id} className="flex justify-between items-center p-4 border rounded">
+              <div
+                key={category.id}
+                className="flex justify-between items-center p-4 border rounded"
+              >
                 <div>
                   <h4 className="font-medium">{category.name}</h4>
                   {category.description && (
