@@ -38,7 +38,7 @@ export const PaymentMethodTab = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
       toast.success('Forma de pagamento criada com sucesso!');
-      setFormData(null); // Reset form after successful creation
+      setFormData(null);
     },
     onError: () => {
       toast.error('Erro ao criar forma de pagamento');

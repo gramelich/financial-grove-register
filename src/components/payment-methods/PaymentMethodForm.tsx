@@ -1,16 +1,25 @@
-// src/components/payment-methods/PaymentMethodForm.tsx
 import React from "react";
-import { Button } from "@/components/ui/button"; // Verifique se o Button não está causando problemas
+import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 
-const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }) => {
-  const { register, handleSubmit } = useForm({
+type PaymentMethodFormData = {
+  name: string;
+  description?: string;
+};
+
+interface PaymentMethodFormProps {
+  defaultValues?: Partial<PaymentMethodFormData>;
+  onSubmit: (data: PaymentMethodFormData) => void;
+  submitLabel: string;
+}
+
+const PaymentMethodForm = ({ defaultValues = {}, onSubmit, submitLabel }: PaymentMethodFormProps) => {
+  const { register, handleSubmit } = useForm<PaymentMethodFormData>({
     defaultValues,
   });
 
-  const handleFormSubmit = (data) => {
-    console.log("Form submitted:", data); // Adicionando log para depuração
-    onSubmit(data); // Chama a função onSubmit passada como prop
+  const handleFormSubmit = (data: PaymentMethodFormData) => {
+    onSubmit(data);
   };
 
   return (
@@ -22,7 +31,7 @@ const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }) => {
         <input
           id="name"
           {...register("name", { required: true })}
-          className="mt-1 p-2 border border-gray-300 rounded"
+          className="mt-1 p-2 w-full border border-gray-300 rounded"
           placeholder="Digite o nome da forma de pagamento"
           required
         />
@@ -34,11 +43,11 @@ const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }) => {
         <input
           id="description"
           {...register("description")}
-          className="mt-1 p-2 border border-gray-300 rounded"
+          className="mt-1 p-2 w-full border border-gray-300 rounded"
           placeholder="Digite uma descrição (opcional)"
         />
       </div>
-      <button type="submit">{submitLabel}</button> {/* Mudei para um botão padrão para depuração */}
+      <Button type="submit" className="w-full">{submitLabel}</Button>
     </form>
   );
 };
