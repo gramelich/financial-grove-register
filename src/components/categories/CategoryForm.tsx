@@ -5,11 +5,13 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+// Schema de validação usando Zod
 const categorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional(),
 });
 
+// Tipo para os dados do formulário
 export type CategoryFormData = z.infer<typeof categorySchema>;
 
 interface CategoryFormProps {
@@ -19,6 +21,7 @@ interface CategoryFormProps {
 }
 
 export const CategoryForm = ({ defaultValues, onSubmit, submitLabel }: CategoryFormProps) => {
+  // Usando react-hook-form com validação via zod
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
@@ -43,7 +46,7 @@ export const CategoryForm = ({ defaultValues, onSubmit, submitLabel }: CategoryF
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="description"
