@@ -18,12 +18,8 @@ const PaymentMethodForm = ({ defaultValues = {}, onSubmit, submitLabel }: Paymen
     defaultValues,
   });
 
-  const handleFormSubmit = (data: PaymentMethodFormData) => {
-    onSubmit(data);
-  };
-
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label htmlFor="name" className="block text-sm font-medium">
           Nome
