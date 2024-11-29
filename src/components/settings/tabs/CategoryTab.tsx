@@ -7,6 +7,7 @@ import { toast } from "sonner";
 export const CategoryTab = () => {
   const queryClient = useQueryClient();
 
+  // Query para carregar as categorias
   const { data: categories, isLoading, isError } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -16,12 +17,13 @@ export const CategoryTab = () => {
         .order('name');
       
       if (error) {
-        throw new Error(error.message); // Lançando o erro para ser capturado
+        throw new Error(error.message); // Lançando erro com a mensagem
       }
       return data;
     }
   });
 
+  // Mutação para criar categoria
   const createCategory = useMutation({
     mutationFn: async (values: CategoryFormData) => {
       const { error } = await supabase
@@ -32,7 +34,7 @@ export const CategoryTab = () => {
         }]);
 
       if (error) {
-        throw new Error(error.message); // Lançando erro para ser tratado no onError
+        throw new Error(error.message); // Lançando erro com a mensagem
       }
     },
     onSuccess: () => {
@@ -40,11 +42,12 @@ export const CategoryTab = () => {
       toast.success('Categoria criada com sucesso!');
     },
     onError: (error: Error) => {
-      console.error("Erro ao criar categoria:", error); // Logando o erro detalhado
+      console.error("Erro ao criar categoria:", error); // Logando o erro no console
       toast.error(`Erro ao criar categoria: ${error.message}`); // Mensagem de erro personalizada
     },
   });
 
+  // Estado de carregamento e erro
   if (isLoading) {
     return <div>Carregando...</div>;
   }
@@ -58,7 +61,10 @@ export const CategoryTab = () => {
       <div className="space-y-6">
         <h3 className="text-lg font-medium">Nova Categoria</h3>
         <CategoryForm 
-          onSubmit={(values) => createCategory.mutate(values)}
+          onSubmit={(values) => {
+            console.log("Enviando valores:", values);  // Log dos valores do formulário
+            createCategory.mutate(values);
+          }}
           submitLabel="Criar Categoria"
         />
 
