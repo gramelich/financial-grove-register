@@ -24,7 +24,10 @@ export const PaymentMethodTab = () => {
     mutationFn: async (values: PaymentMethodFormData) => {
       const { error } = await supabase
         .from('payment_methods')
-        .insert([values]);
+        .insert([{
+          name: values.name,
+          description: values.description || null
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {

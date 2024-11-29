@@ -24,7 +24,10 @@ export const CategoryTab = () => {
     mutationFn: async (values: CategoryFormData) => {
       const { error } = await supabase
         .from('categories')
-        .insert([values]);
+        .insert([{
+          name: values.name,
+          description: values.description || null
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {
