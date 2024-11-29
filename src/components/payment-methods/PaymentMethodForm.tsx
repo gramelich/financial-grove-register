@@ -43,7 +43,9 @@ const PaymentMethodForm = ({ defaultValues = {}, onSubmit, submitLabel }: Paymen
           placeholder="Digite uma descrição (opcional)"
         />
       </div>
-      <Button type="submit" className="w-full">{submitLabel}</Button>
+      <Button type="submit" className="w-full">
+        {submitLabel}
+      </Button>
     </form>
   );
 };
