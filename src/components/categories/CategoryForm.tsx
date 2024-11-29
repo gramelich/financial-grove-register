@@ -10,20 +10,20 @@ const categorySchema = z.object({
   description: z.string().optional(),
 });
 
-type CategoryFormValues = z.infer<typeof categorySchema>;
+export type CategoryFormData = z.infer<typeof categorySchema>;
 
 interface CategoryFormProps {
-  defaultValues?: Partial<CategoryFormValues>;
-  onSubmit: (values: CategoryFormValues) => void;
+  defaultValues?: Partial<CategoryFormData>;
+  onSubmit: (values: CategoryFormData) => void;
   submitLabel: string;
 }
 
 export const CategoryForm = ({ defaultValues, onSubmit, submitLabel }: CategoryFormProps) => {
-  const form = useForm<CategoryFormValues>({
+  const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
-      name: defaultValues?.name || "",
-      description: defaultValues?.description || "",
+      name: defaultValues?.name ?? "",
+      description: defaultValues?.description ?? "",
     },
   });
 

@@ -1,13 +1,8 @@
-import { CategoryForm } from "@/components/categories/CategoryForm";
+import { CategoryForm, CategoryFormData } from "@/components/categories/CategoryForm";
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-type CategoryFormData = {
-  name: string;
-  description?: string;
-};
 
 export const CategoryTab = () => {
   const queryClient = useQueryClient();

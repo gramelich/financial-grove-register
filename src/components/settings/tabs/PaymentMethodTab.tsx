@@ -1,13 +1,8 @@
-import PaymentMethodForm from "@/components/payment-methods/PaymentMethodForm";
+import PaymentMethodForm, { PaymentMethodFormData } from "@/components/payment-methods/PaymentMethodForm";
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-type PaymentMethodFormData = {
-  name: string;
-  description?: string;
-};
 
 export const PaymentMethodTab = () => {
   const queryClient = useQueryClient();

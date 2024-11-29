@@ -10,20 +10,20 @@ const paymentMethodSchema = z.object({
   description: z.string().optional(),
 });
 
-type PaymentMethodFormValues = z.infer<typeof paymentMethodSchema>;
+export type PaymentMethodFormData = z.infer<typeof paymentMethodSchema>;
 
 interface PaymentMethodFormProps {
-  defaultValues?: Partial<PaymentMethodFormValues>;
-  onSubmit: (values: PaymentMethodFormValues) => void;
+  defaultValues?: Partial<PaymentMethodFormData>;
+  onSubmit: (values: PaymentMethodFormData) => void;
   submitLabel: string;
 }
 
 const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }: PaymentMethodFormProps) => {
-  const form = useForm<PaymentMethodFormValues>({
+  const form = useForm<PaymentMethodFormData>({
     resolver: zodResolver(paymentMethodSchema),
     defaultValues: {
-      name: defaultValues?.name || "",
-      description: defaultValues?.description || "",
+      name: defaultValues?.name ?? "",
+      description: defaultValues?.description ?? "",
     },
   });
 
