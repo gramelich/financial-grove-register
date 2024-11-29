@@ -7,7 +7,7 @@ import { toast } from "sonner";
 export const CategoryTab = () => {
   const queryClient = useQueryClient();
 
-  const { data: categories, isLoading } = useQuery({
+  const { data: categories, isLoading, isError } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -15,7 +15,9 @@ export const CategoryTab = () => {
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message); // Lançando o erro para ser capturado
+      }
       return data;
     }
   });
@@ -28,19 +30,27 @@ export const CategoryTab = () => {
           name: values.name,
           description: values.description || null
         }]);
-      if (error) throw error;
+
+      if (error) {
+        throw new Error(error.message); // Lançando erro para ser tratado no onError
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success('Categoria criada com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao criar categoria');
+    onError: (error: Error) => {
+      console.error("Erro ao criar categoria:", error); // Logando o erro detalhado
+      toast.error(`Erro ao criar categoria: ${error.message}`); // Mensagem de erro personalizada
     },
   });
 
   if (isLoading) {
     return <div>Carregando...</div>;
+  }
+
+  if (isError) {
+    return <div>Erro ao carregar categorias.</div>;
   }
 
   return (
