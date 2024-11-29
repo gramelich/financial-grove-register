@@ -12,7 +12,7 @@ type PaymentMethodFormData = {
 export const PaymentMethodTab = () => {
   const queryClient = useQueryClient();
 
-  const { data: paymentMethods } = useQuery({
+  const { data: paymentMethods, isLoading } = useQuery({
     queryKey: ['payment-methods'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,20 +41,18 @@ export const PaymentMethodTab = () => {
     },
   });
 
-  const handleFormSubmit = (values: PaymentMethodFormData) => {
-    createPaymentMethod.mutate(values);
-  };
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <Card className="p-6">
       <div className="space-y-6">
-        <h3 className="text-lg font-medium">Adicionar Nova Forma de Pagamento</h3>
-        <div className="space-y-4">
-          <PaymentMethodForm 
-            onSubmit={handleFormSubmit}
-            submitLabel="Criar Forma de Pagamento"
-          />
-        </div>
+        <h3 className="text-lg font-medium">Nova Forma de Pagamento</h3>
+        <PaymentMethodForm 
+          onSubmit={(values) => createPaymentMethod.mutate(values)}
+          submitLabel="Criar Forma de Pagamento"
+        />
 
         <div className="mt-8">
           <h3 className="text-lg font-medium mb-4">Formas de Pagamento Existentes</h3>

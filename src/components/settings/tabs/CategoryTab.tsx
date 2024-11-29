@@ -3,8 +3,6 @@ import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 type CategoryFormData = {
   name: string;
@@ -13,9 +11,8 @@ type CategoryFormData = {
 
 export const CategoryTab = () => {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState<CategoryFormData | null>(null);
 
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,40 +35,24 @@ export const CategoryTab = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success('Categoria criada com sucesso!');
-      setFormData(null); // Reset form after successful creation
     },
     onError: () => {
       toast.error('Erro ao criar categoria');
     },
   });
 
-  const handleFormSubmit = (values: CategoryFormData) => {
-    setFormData(values);
-  };
-
-  const handleAddCategory = () => {
-    if (formData) {
-      createCategory.mutate(formData);
-    }
-  };
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <Card className="p-6">
       <div className="space-y-6">
-        <h3 className="text-lg font-medium">Adicionar Nova Categoria</h3>
-        <div className="space-y-4">
-          <CategoryForm 
-            onSubmit={handleFormSubmit}
-            submitLabel="Criar Categoria"
-          />
-          <Button 
-            onClick={handleAddCategory}
-            className="w-full"
-            disabled={!formData}
-          >
-            Adicionar
-          </Button>
-        </div>
+        <h3 className="text-lg font-medium">Nova Categoria</h3>
+        <CategoryForm 
+          onSubmit={(values) => createCategory.mutate(values)}
+          submitLabel="Criar Categoria"
+        />
 
         <div className="mt-8">
           <h3 className="text-lg font-medium mb-4">Categorias Existentes</h3>

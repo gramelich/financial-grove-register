@@ -1,52 +1,68 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-type PaymentMethodFormData = {
-  name: string;
-  description?: string;
-};
+const paymentMethodSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  description: z.string().optional(),
+});
+
+type PaymentMethodFormValues = z.infer<typeof paymentMethodSchema>;
 
 interface PaymentMethodFormProps {
-  defaultValues?: Partial<PaymentMethodFormData>;
-  onSubmit: (data: PaymentMethodFormData) => void;
+  defaultValues?: Partial<PaymentMethodFormValues>;
+  onSubmit: (values: PaymentMethodFormValues) => void;
   submitLabel: string;
 }
 
-const PaymentMethodForm = ({ defaultValues = {}, onSubmit, submitLabel }: PaymentMethodFormProps) => {
-  const { register, handleSubmit } = useForm<PaymentMethodFormData>({
-    defaultValues,
+const PaymentMethodForm = ({ defaultValues, onSubmit, submitLabel }: PaymentMethodFormProps) => {
+  const form = useForm<PaymentMethodFormValues>({
+    resolver: zodResolver(paymentMethodSchema),
+    defaultValues: {
+      name: defaultValues?.name || "",
+      description: defaultValues?.description || "",
+    },
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium">
-          Nome
-        </label>
-        <input
-          id="name"
-          {...register("name", { required: true })}
-          className="mt-1 p-2 w-full border border-gray-300 rounded"
-          placeholder="Digite o nome da forma de pagamento"
-          required
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Digite o nome da forma de pagamento" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium">
-          Descrição
-        </label>
-        <input
-          id="description"
-          {...register("description")}
-          className="mt-1 p-2 w-full border border-gray-300 rounded"
-          placeholder="Digite uma descrição (opcional)"
+        
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Digite uma descrição (opcional)" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <Button type="submit" className="w-full">
-        {submitLabel}
-      </Button>
-    </form>
+
+        <Button type="submit" className="w-full">
+          {submitLabel}
+        </Button>
+      </form>
+    </Form>
   );
 };
 
