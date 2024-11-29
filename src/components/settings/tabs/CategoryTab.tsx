@@ -17,7 +17,7 @@ export const CategoryTab = () => {
         .order("name");
 
       if (error) {
-        throw new Error(error.message); // Lançando erro com a mensagem
+        throw new Error(error.message);
       }
       return data;
     },
@@ -36,7 +36,7 @@ export const CategoryTab = () => {
         ]);
 
       if (error) {
-        throw new Error(error.message); // Lançando erro com a mensagem
+        throw new Error(error.message);
       }
     },
     onSuccess: () => {
@@ -44,8 +44,8 @@ export const CategoryTab = () => {
       toast.success("Categoria criada com sucesso!");
     },
     onError: (error: Error) => {
-      console.error("Erro ao criar categoria:", error); // Logando o erro no console
-      toast.error(`Erro ao criar categoria: ${error.message}`); // Mensagem de erro personalizada
+      console.error("Erro ao criar categoria:", error);
+      toast.error(`Erro ao criar categoria: ${error.message}`);
     },
   });
 
@@ -65,7 +65,6 @@ export const CategoryTab = () => {
         <CategoryForm
           onSubmit={(values) => {
             alert(`Adicionando categoria:\nNome: ${values.name}\nDescrição: ${values.description || "Nenhuma"}`);
-            console.log("Enviando valores:", values); // Log dos valores do formulário
             createCategory.mutate(values);
           }}
           submitLabel="Criar Categoria"
