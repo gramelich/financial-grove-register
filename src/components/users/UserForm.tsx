@@ -33,8 +33,13 @@ interface UserFormProps {
   onSuccess: () => void;
 }
 
+interface Tenant {
+  id: string;
+  name: string;
+}
+
 export function UserForm({ onSuccess }: UserFormProps) {
-  const [tenants, setTenants] = useState([]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,13 +48,17 @@ export function UserForm({ onSuccess }: UserFormProps) {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       // Criar usuário no Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
-        email_confirm: true,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
 
       if (authError) throw authError;
+
+      if (!authData.user) throw new Error("No user data returned");
 
       // Associar usuário ao tenant
       const { error: tenantError } = await supabase
@@ -130,7 +139,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {tenants.map((tenant: any) => (
+                  {tenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
                       {tenant.name}
                     </SelectItem>

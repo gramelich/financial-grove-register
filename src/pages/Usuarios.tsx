@@ -42,12 +42,11 @@ const Usuarios = () => {
 
       if (tenantError) throw tenantError;
 
-      const userIds = tenantUsers.map(tu => tu.user_id);
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
 
       if (authError) throw authError;
 
-      const combinedUsers = tenantUsers.map(tu => {
+      const combinedUsers = tenantUsers?.map(tu => {
         const authUser = authUsers.users.find(u => u.id === tu.user_id);
         return {
           id: tu.user_id,
@@ -56,7 +55,7 @@ const Usuarios = () => {
           tenant_id: tu.tenant_id,
           tenant_name: tu.tenants?.name || ''
         };
-      });
+      }) || [];
 
       setUsers(combinedUsers);
     } catch (error) {
