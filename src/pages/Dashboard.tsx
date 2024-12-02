@@ -6,10 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useState } from "react";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 const COLORS = ['#10B981', '#EF4444', '#F59E0B'];
 
 const Dashboard = () => {
+  const { session } = useSessionContext();
   const [filters, setFilters] = useState({
     startDate: "",
     endDate: "",
@@ -19,11 +21,25 @@ const Dashboard = () => {
   });
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions', filters],
+    queryKey: ['transactions', filters, session?.user.id],
     queryFn: async () => {
+      if (!session?.user.id) throw new Error('No user session');
+
+      // First get the user's tenant
+      const { data: tenantUsers, error: tenantError } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (tenantError) throw tenantError;
+      if (!tenantUsers?.tenant_id) throw new Error('No tenant found for user');
+
+      // Then query transactions for that tenant
       let query = supabase
         .from('transactions')
         .select('*')
+        .eq('tenant_id', tenantUsers.tenant_id)
         .order('created_at', { ascending: false });
 
       if (filters.startDate) {
@@ -32,13 +48,13 @@ const Dashboard = () => {
       if (filters.endDate) {
         query = query.lte('due_date', filters.endDate);
       }
-      if (filters.type) {
+      if (filters.type && filters.type !== 'all') {
         query = query.eq('type', filters.type);
       }
-      if (filters.status) {
+      if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
       }
-      if (filters.category) {
+      if (filters.category && filters.category !== 'all') {
         query = query.eq('category', filters.category);
       }
 
@@ -46,6 +62,7 @@ const Dashboard = () => {
       if (error) throw error;
       return data as Transaction[];
     },
+    enabled: !!session?.user.id
   });
 
   const summary = {
