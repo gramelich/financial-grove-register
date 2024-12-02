@@ -38,6 +38,11 @@ interface TenantUser {
   };
 }
 
+interface SupabaseUser {
+  id: string;
+  email?: string;
+}
+
 const Usuarios = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,13 +70,16 @@ const Usuarios = () => {
 
       if (authError) throw authError;
 
-      const combinedUsers: User[] = (tenantUsers as TenantUser[]).map((tu) => ({
-        id: tu.user_id,
-        email: authUsers.find((u) => u.id === tu.user_id)?.email || "",
-        role: tu.role,
-        tenant_id: tu.tenant_id,
-        tenant_name: tu.tenants?.name || "",
-      }));
+      const combinedUsers: User[] = (tenantUsers as TenantUser[]).map((tu) => {
+        const authUser = (authUsers as SupabaseUser[]).find(u => u.id === tu.user_id);
+        return {
+          id: tu.user_id,
+          email: authUser?.email || "",
+          role: tu.role,
+          tenant_id: tu.tenant_id,
+          tenant_name: tu.tenants?.name || "",
+        };
+      });
 
       setUsers(combinedUsers);
     } catch (error) {
