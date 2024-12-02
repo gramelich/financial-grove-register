@@ -47,7 +47,7 @@ const Usuarios = () => {
           tenants (
             name
           )
-        `);
+        `) as { data: TenantUser[] | null, error: any };
 
       if (tenantError) throw tenantError;
 
