@@ -47,7 +47,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Criar usuário no Auth
+      // Create user in Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -60,7 +60,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
 
       if (!authData.user) throw new Error("No user data returned");
 
-      // Associar usuário ao tenant
+      // Associate user with tenant
       const { error: tenantError } = await supabase
         .from('tenant_users')
         .insert({

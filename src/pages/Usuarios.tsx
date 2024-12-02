@@ -47,24 +47,22 @@ const Usuarios = () => {
           tenants (
             name
           )
-        `) as { data: TenantUser[] | null, error: any };
+        `);
 
       if (tenantError) throw tenantError;
 
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      // Get all users from auth
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
 
       if (authError) throw authError;
 
-      const combinedUsers = tenantUsers?.map(tu => {
-        const authUser = authUsers.users.find(u => u.id === tu.user_id);
-        return {
-          id: tu.user_id,
-          email: authUser?.email || '',
-          role: tu.role,
-          tenant_id: tu.tenant_id,
-          tenant_name: tu.tenants?.name || ''
-        };
-      }) || [];
+      const combinedUsers = (tenantUsers || []).map(tu => ({
+        id: tu.user_id,
+        email: authData.users.find(u => u.id === tu.user_id)?.email || '',
+        role: tu.role,
+        tenant_id: tu.tenant_id,
+        tenant_name: tu.tenants?.name || ''
+      }));
 
       setUsers(combinedUsers);
     } catch (error) {
