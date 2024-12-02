@@ -47,7 +47,7 @@ const Usuarios = () => {
           tenants (
             name
           )
-        `) as { data: TenantUser[] | null, error: any };
+        `);
 
       if (tenantError) throw tenantError;
 
@@ -56,7 +56,7 @@ const Usuarios = () => {
 
       if (authError) throw authError;
 
-      const combinedUsers = (tenantUsers || []).map(tu => ({
+      const combinedUsers = (tenantUsers || []).map((tu: TenantUser) => ({
         id: tu.user_id,
         email: authData.users.find(u => u.id === tu.user_id)?.email || '',
         role: tu.role,
