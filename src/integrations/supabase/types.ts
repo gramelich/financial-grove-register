@@ -15,6 +15,7 @@ export type Database = {
           description: string | null
           id: number
           name: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -22,6 +23,7 @@ export type Database = {
           description?: string | null
           id?: number
           name: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -29,9 +31,18 @@ export type Database = {
           description?: string | null
           id?: number
           name?: string
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_methods: {
         Row: {
@@ -39,6 +50,7 @@ export type Database = {
           description: string | null
           id: number
           name: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -46,6 +58,7 @@ export type Database = {
           description?: string | null
           id?: number
           name: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -53,9 +66,18 @@ export type Database = {
           description?: string | null
           id?: number
           name?: string
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       settings: {
         Row: {
@@ -63,6 +85,7 @@ export type Database = {
           description: string | null
           id: number
           key: string
+          tenant_id: string | null
           updated_at: string
           value: string | null
         }
@@ -71,6 +94,7 @@ export type Database = {
           description?: string | null
           id?: number
           key: string
+          tenant_id?: string | null
           updated_at?: string
           value?: string | null
         }
@@ -79,8 +103,82 @@ export type Database = {
           description?: string | null
           id?: number
           key?: string
+          tenant_id?: string | null
           updated_at?: string
           value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -99,6 +197,7 @@ export type Database = {
           payment_method: string | null
           status: string
           supplier: string
+          tenant_id: string | null
           type: string
           unit: string
           updated_at: string
@@ -117,6 +216,7 @@ export type Database = {
           payment_method?: string | null
           status: string
           supplier: string
+          tenant_id?: string | null
           type: string
           unit: string
           updated_at?: string
@@ -135,11 +235,20 @@ export type Database = {
           payment_method?: string | null
           status?: string
           supplier?: string
+          tenant_id?: string | null
           type?: string
           unit?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
