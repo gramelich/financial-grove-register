@@ -3,12 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { createClient } from '@supabase/supabase-js';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Lancamentos from "./pages/Lancamentos";
 import Configuracoes from "./pages/Configuracoes";
+import Usuarios from "./pages/Usuarios";
 import Login from "./pages/Login";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -60,6 +60,7 @@ const App = () => (
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/lancamentos" element={<Lancamentos />} />
+                      <Route path="/usuarios" element={<Usuarios />} />
                       <Route path="/configuracoes" element={<Configuracoes />} />
                     </Routes>
                   </Layout>

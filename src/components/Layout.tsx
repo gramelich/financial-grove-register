@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Receipt, Settings } from "lucide-react";
+import { LayoutDashboard, Receipt, Settings, Users } from "lucide-react";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -7,6 +7,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Lançamentos", href: "/lancamentos", icon: Receipt },
+    { name: "Usuários", href: "/usuarios", icon: Users },
     { name: "Configurações", href: "/configuracoes", icon: Settings },
   ];
 
