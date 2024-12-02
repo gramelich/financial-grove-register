@@ -22,6 +22,15 @@ interface User {
   tenant_name: string;
 }
 
+interface TenantUser {
+  user_id: string;
+  role: string;
+  tenant_id: string;
+  tenants: {
+    name: string;
+  } | null;
+}
+
 const Usuarios = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +47,7 @@ const Usuarios = () => {
           tenants (
             name
           )
-        `);
+        `) as { data: TenantUser[] | null, error: any };
 
       if (tenantError) throw tenantError;
 

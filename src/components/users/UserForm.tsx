@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -87,7 +87,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     const fetchTenants = async () => {
       const { data } = await supabase.from('tenants').select('*');
       setTenants(data || []);
