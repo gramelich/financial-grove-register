@@ -14,6 +14,7 @@ import { PaymentMethodTab } from "./tabs/PaymentMethodTab";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 const settingsFormSchema = z.object({
   supabase_api_key: z.string().optional(),
@@ -29,6 +30,7 @@ const settingsFormSchema = z.object({
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
 export const SettingsForm = () => {
+  const { session } = useSessionContext();
   const queryClient = useQueryClient();
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
@@ -37,13 +39,16 @@ export const SettingsForm = () => {
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
+      if (!session) throw new Error('No session');
+      
       const { data, error } = await supabase
         .from('settings')
         .select('*');
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!session
   });
 
   // Set form values when settings are loaded
