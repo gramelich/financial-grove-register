@@ -31,23 +31,24 @@ const Dashboard = () => {
         const { data: tenantUsers, error: tenantError } = await supabase
           .from('tenant_users')
           .select('tenant_id')
-          .eq('user_id', session.user.id);
+          .eq('user_id', session.user.id)
+          .maybeSingle(); // Using maybeSingle() instead of single()
 
         if (tenantError) {
           console.error('Error fetching tenant:', tenantError);
           throw tenantError;
         }
 
-        if (!tenantUsers || tenantUsers.length === 0) {
+        if (!tenantUsers) {
           toast({
-            title: "Error",
-            description: "No tenant found for user. Please contact support.",
+            title: "No Access",
+            description: "You are not associated with any tenant. Please contact your administrator.",
             variant: "destructive",
           });
           return [];
         }
 
-        const tenantId = tenantUsers[0].tenant_id;
+        const tenantId = tenantUsers.tenant_id;
 
         // Then query transactions for that tenant
         let query = supabase
