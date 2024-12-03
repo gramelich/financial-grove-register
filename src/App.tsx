@@ -57,18 +57,16 @@ const App = () => (
               path="/"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/lancamentos" element={<Lancamentos />} />
-                      <Route path="/usuarios" element={<Usuarios />} />
-                      <Route path="/configuracoes" element={<Configuracoes />} />
-                      <Route path="/perfil" element={<Profile />} />
-                    </Routes>
-                  </Layout>
+                  <Layout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="lancamentos" element={<Lancamentos />} />
+              <Route path="usuarios" element={<Usuarios />} />
+              <Route path="configuracoes" element={<Configuracoes />} />
+              <Route path="perfil" element={<Profile />} />
+            </Route>
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

@@ -3,6 +3,7 @@ import { LayoutDashboard, Receipt, Settings, Users, User, LogOut } from "lucide-
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Outlet } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { session } = useSessionContext();
@@ -99,7 +100,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-6">
+            <Outlet />
+          </main>
         </div>
       </div>
     </div>
