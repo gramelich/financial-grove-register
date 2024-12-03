@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useState } from "react";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { useSessionContext } from '@supabase/auth-helpers-react';
+import { toast } from "@/components/ui/use-toast";
 
 const COLORS = ['#10B981', '#EF4444', '#F59E0B'];
 
@@ -23,44 +24,67 @@ const Dashboard = () => {
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', filters, session?.user.id],
     queryFn: async () => {
-      if (!session?.user.id) throw new Error('No user session');
+      try {
+        if (!session?.user.id) {
+          throw new Error('No user session');
+        }
 
-      // First get the user's tenant
-      const { data: tenantUsers, error: tenantError } = await supabase
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('user_id', session.user.id)
-        .single();
+        // First get the user's tenant
+        const { data: tenantUser, error: tenantError } = await supabase
+          .from('tenant_users')
+          .select('tenant_id')
+          .eq('user_id', session.user.id)
+          .single();
 
-      if (tenantError) throw tenantError;
-      if (!tenantUsers?.tenant_id) throw new Error('No tenant found for user');
+        if (tenantError) {
+          console.error('Error fetching tenant:', tenantError);
+          throw tenantError;
+        }
 
-      // Then query transactions for that tenant
-      let query = supabase
-        .from('transactions')
-        .select('*')
-        .eq('tenant_id', tenantUsers.tenant_id)
-        .order('created_at', { ascending: false });
+        if (!tenantUser?.tenant_id) {
+          throw new Error('No tenant found for user');
+        }
 
-      if (filters.startDate) {
-        query = query.gte('due_date', filters.startDate);
-      }
-      if (filters.endDate) {
-        query = query.lte('due_date', filters.endDate);
-      }
-      if (filters.type && filters.type !== 'all') {
-        query = query.eq('type', filters.type);
-      }
-      if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      if (filters.category && filters.category !== 'all') {
-        query = query.eq('category', filters.category);
-      }
+        // Then query transactions for that tenant
+        let query = supabase
+          .from('transactions')
+          .select('*')
+          .eq('tenant_id', tenantUser.tenant_id)
+          .order('created_at', { ascending: false });
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Transaction[];
+        if (filters.startDate) {
+          query = query.gte('due_date', filters.startDate);
+        }
+        if (filters.endDate) {
+          query = query.lte('due_date', filters.endDate);
+        }
+        if (filters.type && filters.type !== 'all') {
+          query = query.eq('type', filters.type);
+        }
+        if (filters.status && filters.status !== 'all') {
+          query = query.eq('status', filters.status);
+        }
+        if (filters.category && filters.category !== 'all') {
+          query = query.eq('category', filters.category);
+        }
+
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error('Error fetching transactions:', error);
+          throw error;
+        }
+
+        return data as Transaction[];
+      } catch (error) {
+        console.error('Error in query:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load transactions. Please try again.",
+          variant: "destructive",
+        });
+        return [];
+      }
     },
     enabled: !!session?.user.id
   });
