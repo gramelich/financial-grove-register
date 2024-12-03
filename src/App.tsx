@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Lancamentos from "./pages/Lancamentos";
 import Configuracoes from "./pages/Configuracoes";
 import Usuarios from "./pages/Usuarios";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -62,6 +63,7 @@ const App = () => (
                       <Route path="/lancamentos" element={<Lancamentos />} />
                       <Route path="/usuarios" element={<Usuarios />} />
                       <Route path="/configuracoes" element={<Configuracoes />} />
+                      <Route path="/perfil" element={<Profile />} />
                     </Routes>
                   </Layout>
                 </ProtectedRoute>
