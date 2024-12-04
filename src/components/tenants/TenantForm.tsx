@@ -4,10 +4,10 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 const tenantFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -19,6 +19,7 @@ type TenantFormValues = z.infer<typeof tenantFormSchema>;
 
 export function TenantForm() {
   const navigate = useNavigate();
+  const { session } = useSessionContext();
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantFormSchema),
     defaultValues: {
@@ -29,9 +30,10 @@ export function TenantForm() {
 
   const onSubmit = async (values: TenantFormValues) => {
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não encontrado");
+      if (!session?.user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
 
       // Insert new tenant
       const { data: tenantData, error: tenantError } = await supabase
@@ -43,14 +45,20 @@ export function TenantForm() {
         .select()
         .single();
 
-      if (tenantError) throw tenantError;
+      if (tenantError) {
+        if (tenantError.code === '23505') { // Unique violation
+          toast.error("Este slug já está em uso. Por favor, escolha outro.");
+          return;
+        }
+        throw tenantError;
+      }
 
       // Associate user with tenant
       const { error: userError } = await supabase
         .from('tenant_users')
         .insert({
           tenant_id: tenantData.id,
-          user_id: user.id,
+          user_id: session.user.id,
           role: 'admin'
         });
 
@@ -64,14 +72,14 @@ export function TenantForm() {
     }
   };
 
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    form.setValue('slug', value);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex items-center gap-2 text-xl font-semibold">
-          <Building2 className="h-6 w-6" />
-          <h1>Novo Inquilino</h1>
-        </div>
-
         <FormField
           control={form.control}
           name="name"
@@ -79,7 +87,7 @@ export function TenantForm() {
             <FormItem>
               <FormLabel>Nome do Inquilino</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="Ex: Minha Empresa" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -93,7 +101,11 @@ export function TenantForm() {
             <FormItem>
               <FormLabel>Slug (identificador único)</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="exemplo-empresa" />
+                <Input 
+                  {...field} 
+                  placeholder="ex: minha-empresa"
+                  onChange={handleSlugChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
