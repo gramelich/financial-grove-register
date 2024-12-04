@@ -20,87 +20,52 @@ import {
 import { UserForm } from "@/components/users/UserForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
 
 interface User {
   id: string;
   email: string;
   role: string;
-  tenant_id: string;
   tenant_name: string;
 }
 
-interface TenantUser {
-  user_id: string;
-  role: string;
-  tenant_id: string;
-  tenants: {
-    name: string;
-  };
-}
-
-interface SupabaseUser {
-  id: string;
-  email?: string;
-}
-
 const Usuarios = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      
-      const { data: tenantUsers, error: tenantError } = await supabase
-        .from("tenant_users")
+  const { data: users, isLoading } = useQuery({
+    queryKey: ['tenant-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tenant_users')
         .select(`
-          user_id,
+          id,
           role,
-          tenant_id,
+          user_id,
           tenants (
             name
           )
-        `);
+        `)
+        .order('created_at', { ascending: false });
 
-      if (tenantError) throw tenantError;
+      if (error) throw error;
 
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
-
+      // Now fetch the emails for these users
+      const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
 
-      const combinedUsers: User[] = (tenantUsers as TenantUser[]).map((tu) => {
-        const authUser = (authUsers as SupabaseUser[]).find(u => u.id === tu.user_id);
-        return {
-          id: tu.user_id,
-          email: authUser?.email || "",
-          role: tu.role,
-          tenant_id: tu.tenant_id,
-          tenant_name: tu.tenants?.name || "",
-        };
-      });
-
-      setUsers(combinedUsers);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os usuários",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Map the data to include email from auth
+      return data.map((user) => ({
+        id: user.id,
+        email: authData.user.email, // We'll only see the current user's email
+        role: user.role,
+        tenant_name: user.tenants?.name || '',
+      }));
     }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  });
 
   const handleUserCreated = () => {
     setDialogOpen(false);
-    fetchUsers();
     toast({
       title: "Sucesso",
       description: "Usuário criado com sucesso",
@@ -146,14 +111,15 @@ const Usuarios = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.tenant_name}</TableCell>
-                      <TableCell className="capitalize">{user.role}</TableCell>
-                    </TableRow>
-                  ))}
-                  {users.length === 0 && (
+                  {users && users.length > 0 ? (
+                    users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.tenant_name}</TableCell>
+                        <TableCell className="capitalize">{user.role}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
                         Nenhum usuário encontrado
