@@ -64,19 +64,25 @@ export const SettingsForm = () => {
 
   const updateSettings = useMutation({
     mutationFn: async (values: SettingsFormValues) => {
-      const updates = Object.entries(values).map(([key, value]) => ({
-        key,
-        value: value?.toString(),
-      }));
+      const updates = Object.entries(values)
+        .filter(([_, value]) => value !== undefined)
+        .map(([key, value]) => ({
+          key,
+          value: Array.isArray(value) ? JSON.stringify(value) : value?.toString(),
+        }));
 
-      const { error } = await supabase
-        .from('settings')
-        .upsert(updates.map(update => ({
-          key: update.key,
-          value: update.value,
-        })));
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('settings')
+          .upsert({
+            key: update.key,
+            value: update.value,
+          }, {
+            onConflict: 'key'
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
