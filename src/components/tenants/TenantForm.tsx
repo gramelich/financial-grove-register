@@ -25,10 +25,15 @@ export function TenantForm() {
 
   const onSubmit = async (values: TenantFormValues) => {
     try {
-      // Insert new tenant
+      // Insert new tenant with required fields
       const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
-        .insert([values])
+        .insert({
+          name: values.name,
+          slug: values.slug,
+          logo_url: null,
+          primary_color: null
+        })
         .select()
         .single();
 
@@ -41,11 +46,11 @@ export function TenantForm() {
       // Associate user with tenant
       const { error: userError } = await supabase
         .from('tenant_users')
-        .insert([{
+        .insert({
           tenant_id: tenantData.id,
           user_id: user.id,
           role: 'admin'
-        }]);
+        });
 
       if (userError) throw userError;
 
