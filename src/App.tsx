@@ -11,10 +11,18 @@ import Configuracoes from "./pages/Configuracoes";
 import Usuarios from "./pages/Usuarios";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import TenantRegistration from "./pages/TenantRegistration";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -53,6 +61,11 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/tenant/register" element={
+              <ProtectedRoute>
+                <TenantRegistration />
+              </ProtectedRoute>
+            } />
             <Route
               path="/"
               element={
