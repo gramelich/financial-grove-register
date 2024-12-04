@@ -21,27 +21,29 @@ export function TenantForm() {
   const navigate = useNavigate();
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantFormSchema),
+    defaultValues: {
+      name: "",
+      slug: "",
+    }
   });
 
   const onSubmit = async (values: TenantFormValues) => {
     try {
-      // Insert new tenant with required fields
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não encontrado");
+
+      // Insert new tenant
       const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
         .insert({
           name: values.name,
           slug: values.slug,
-          logo_url: null,
-          primary_color: null
         })
         .select()
         .single();
 
       if (tenantError) throw tenantError;
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não encontrado");
 
       // Associate user with tenant
       const { error: userError } = await supabase
@@ -56,9 +58,9 @@ export function TenantForm() {
 
       toast.success("Inquilino cadastrado com sucesso!");
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar inquilino:', error);
-      toast.error("Erro ao cadastrar inquilino");
+      toast.error(error.message || "Erro ao cadastrar inquilino");
     }
   };
 

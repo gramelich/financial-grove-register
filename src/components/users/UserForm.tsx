@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -40,25 +40,48 @@ interface Tenant {
 
 export function UserForm({ onSuccess }: UserFormProps) {
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      tenant_id: "",
+      role: "",
+    },
   });
+
+  useEffect(() => {
+    const fetchTenants = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tenants')
+          .select('id, name');
+        
+        if (error) throw error;
+        setTenants(data || []);
+      } catch (error) {
+        console.error('Erro ao buscar tenants:', error);
+        toast.error("Erro ao carregar a lista de inquilinos");
+      }
+    };
+
+    fetchTenants();
+  }, []);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      setIsLoading(true);
+
       // Create user in Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
       });
 
       if (authError) throw authError;
-
-      if (!authData.user) throw new Error("No user data returned");
+      if (!authData.user) throw new Error("Erro ao criar usuário");
 
       // Associate user with tenant
       const { error: tenantError } = await supabase
@@ -71,29 +94,16 @@ export function UserForm({ onSuccess }: UserFormProps) {
 
       if (tenantError) throw tenantError;
 
-      toast({
-        title: "Sucesso",
-        description: "Usuário criado com sucesso",
-      });
-      
+      toast.success("Usuário criado com sucesso");
+      form.reset();
       onSuccess();
-    } catch (error) {
-      console.error('Error creating user:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o usuário",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
+      toast.error(error.message || "Erro ao criar usuário");
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    const fetchTenants = async () => {
-      const { data } = await supabase.from('tenants').select('*');
-      setTenants(data || []);
-    };
-    fetchTenants();
-  }, []);
 
   return (
     <Form {...form}>
@@ -105,7 +115,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} type="email" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -131,11 +141,11 @@ export function UserForm({ onSuccess }: UserFormProps) {
           name="tenant_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tenant</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormLabel>Inquilino</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione um tenant" />
+                    <SelectValue placeholder="Selecione um inquilino" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -157,7 +167,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Papel</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um papel" />
@@ -173,8 +183,8 @@ export function UserForm({ onSuccess }: UserFormProps) {
           )}
         />
 
-        <Button type="submit" className="w-full">
-          Criar Usuário
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Criando..." : "Criar Usuário"}
         </Button>
       </form>
     </Form>
