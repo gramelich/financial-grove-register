@@ -17,7 +17,11 @@ const tenantFormSchema = z.object({
 
 type TenantFormValues = z.infer<typeof tenantFormSchema>;
 
-export function TenantForm() {
+interface TenantFormProps {
+  onSuccess?: () => void;
+}
+
+export function TenantForm({ onSuccess }: TenantFormProps) {
   const navigate = useNavigate();
   const { session } = useSessionContext();
   const form = useForm<TenantFormValues>({
@@ -65,7 +69,12 @@ export function TenantForm() {
       if (userError) throw userError;
 
       toast.success("Inquilino cadastrado com sucesso!");
-      navigate("/");
+      form.reset();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate("/");
+      }
     } catch (error: any) {
       console.error('Erro ao criar inquilino:', error);
       toast.error(error.message || "Erro ao cadastrar inquilino");
