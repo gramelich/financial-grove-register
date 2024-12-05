@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useSessionContext } from '@supabase/auth-helpers-react';
+import { useQueryClient } from "@tanstack/react-query";
 
 const tenantFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -24,6 +25,8 @@ interface TenantFormProps {
 export function TenantForm({ onSuccess }: TenantFormProps) {
   const navigate = useNavigate();
   const { session } = useSessionContext();
+  const queryClient = useQueryClient();
+  
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantFormSchema),
     defaultValues: {
@@ -39,15 +42,12 @@ export function TenantForm({ onSuccess }: TenantFormProps) {
         return;
       }
 
-      // Insert new tenant
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
-        .insert({
-          name: values.name,
-          slug: values.slug,
-        })
-        .select()
-        .single();
+      // Start a transaction using RPC to ensure both operations succeed or fail together
+      const { data: tenantData, error: tenantError } = await supabase.rpc('create_tenant_with_user', {
+        p_name: values.name,
+        p_slug: values.slug,
+        p_user_id: session.user.id
+      });
 
       if (tenantError) {
         if (tenantError.code === '23505') { // Unique violation
@@ -57,19 +57,12 @@ export function TenantForm({ onSuccess }: TenantFormProps) {
         throw tenantError;
       }
 
-      // Associate user with tenant
-      const { error: userError } = await supabase
-        .from('tenant_users')
-        .insert({
-          tenant_id: tenantData.id,
-          user_id: session.user.id,
-          role: 'admin'
-        });
-
-      if (userError) throw userError;
-
       toast.success("Inquilino cadastrado com sucesso!");
       form.reset();
+      
+      // Invalidate the tenants query to trigger a refetch
+      await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      
       if (onSuccess) {
         onSuccess();
       } else {

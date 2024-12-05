@@ -31,7 +31,7 @@ interface Tenant {
 export default function TenantRegistration() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: tenants, isLoading } = useQuery({
+  const { data: tenants, isLoading, error } = useQuery({
     queryKey: ['tenants'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,7 +39,10 @@ export default function TenantRegistration() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tenants:', error);
+        throw error;
+      }
       return data as Tenant[];
     }
   });
@@ -47,6 +50,14 @@ export default function TenantRegistration() {
   const handleTenantCreated = () => {
     setDialogOpen(false);
   };
+
+  if (error) {
+    return (
+      <div className="flex justify-center py-8">
+        <p className="text-destructive">Erro ao carregar inquilinos. Por favor, tente novamente.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
